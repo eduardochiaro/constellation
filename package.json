@@ -1,0 +1,89 @@
+{
+  "name": "constellation",
+  "author": "Eduardo Chiaro",
+  "version": "1.0.0",
+  "keywords": [
+    "pebble-watchface",
+    "pebble",
+    "startfield",
+    "constellation"
+  ],
+  "private": true,
+  "dependencies": {
+    "@rebble/clay": "^1.0.6"
+  },
+  "pebble": {
+    "displayName": "Constellation",
+    "uuid": "acdce9c9-bc53-4761-97a7-dcb6e25c6641",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "SHOW_SECOND_TICKER",
+      "STEP_GOAL",
+      "SPLASH_LOGO_STYLE",
+      "SHOW_CLOCK_RING",
+      "SHOW_SPLASH_SCREEN"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "PM_ACTIVE_IMAGE",
+          "file": "pm_active.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "PM_INACTIVE_IMAGE",
+          "file": "pm_inactive.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "AM_ACTIVE_IMAGE",
+          "file": "am_active.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "AM_INACTIVE_IMAGE",
+          "file": "am_inactive.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WALKING_IMAGE",
+          "file": "walking.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "FLAG_IMAGE",
+          "file": "flag.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "LOGO_BW_IMAGE",
+          "file": "bw_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "LOGO_COLOR_IMAGE",
+          "file": "color_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "menu_icon.png",
+          "menuIcon": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Constellation Settings"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Display Options"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_SECOND_TICKER",
+        "label": "Show Second Ticker",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_CLOCK_RING",
+        "label": "Show Clock Ring",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_SPLASH_SCREEN",
+        "label": "Show Splash Screen",
+        "defaultValue": true
+      },
+      {
+        "type": "select",
+        "messageKey": "SPLASH_LOGO_STYLE",
+        "label": "Splash Logo Style",
+        "defaultValue": "bw",
+        "options": [
+          {
+            "label": "Black & White",
+            "value": "bw"
+          },
+          {
+            "label": "Color",
+            "value": "color"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Health"
+      },
+      {
+        "type": "input",
+        "messageKey": "STEP_GOAL",
+        "label": "Daily Step Goal",
+        "defaultValue": "8000",
+        "attributes": {
+          "type": "number",
+          "min": 1000,
+          "max": 50000,
+          "step": 500
+        }
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
+  }
+]
