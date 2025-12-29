@@ -1,14 +1,14 @@
 #include <pebble.h>
-#include "modules/top_module.h"
-#include "modules/bottom_module.h"
-#include "modules/battery_module.h"
-#include "modules/step_tracker_module.h"
-#include "modules/splash_logo_module.h"
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
+#define BATTERY_WIDTH 25
+#define BATTERY_HEIGHT 2
+#define STEP_TRACK_WIDTH 15
+#define STEP_TRACK_MARGIN 4
+#define WALKING_ICON_SIZE 15
 #define SECONDS_INDICATOR_SIZE 4
 #define SPLASH_DURATION_MS 2000
 
@@ -17,65 +17,73 @@
 // ============================================================================
 
 static Window *s_window;
+static BitmapLayer *s_splash_logo_layer;
 
-// Text layers (central elements only)
+// Text layers
+static TextLayer *s_day_layer;
 static TextLayer *s_time_layer;
+static TextLayer *s_date_layer;
 
 // Custom drawing layers
 static Layer *s_canvas_layer;
 static Layer *s_ampm_layer;
+static Layer *s_battery_layer;
+
+// Icon layers
+static BitmapLayer *s_walk_layer;
+static BitmapLayer *s_flag_layer;
 
 // ============================================================================
 // GLOBAL STATE - Bitmaps
 // ============================================================================
 
+static GBitmap *s_logo_bitmap;
+static GBitmap *s_logo_color_bitmap;
 static GBitmap *s_am_active_bitmap;
 static GBitmap *s_am_inactive_bitmap;
 static GBitmap *s_pm_active_bitmap;
 static GBitmap *s_pm_inactive_bitmap;
+static GBitmap *s_walking_bitmap;
+static GBitmap *s_flag_bitmap;
 
 // ============================================================================
 // GLOBAL STATE - App Data
 // ============================================================================
 
 static bool s_is_pm;
+static int s_step_count;
+static int s_battery_percent = 100;
 static int s_current_second;
 
 // User settings (persisted)
 static bool s_show_second_ticker = true;
 static bool s_show_clock_ring = true;
-static bool s_use_24h_format = false;
-static bool s_show_step_tracker = true;
-static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
-static DateFormatType s_bottom_module_format = DATE_FORMAT_MONTH_DAY;
+static bool s_show_splash_screen = true;
 static int s_step_goal = 8000;
-static char* s_style_logo = "bw";
-static bool s_step_tracker_use_line = false;
+static bool s_use_color_logo = false;
 
 // ============================================================================
 // FORWARD DECLARATIONS
 // ============================================================================
 
 static void load_watchface_ui(void *data);
-static DateFormatType parse_date_format(const char *format_str);
+#if defined(PBL_HEALTH)
+static void health_handler(HealthEventType event, void *context);
+#endif
 
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
 
-static DateFormatType parse_date_format(const char *format_str) {
-  if (!format_str) return DATE_FORMAT_WEEKDAY;
+static void to_uppercase(char *str) {
+  if (!str) return;
   
-  if (strcmp(format_str, "weekday") == 0) return DATE_FORMAT_WEEKDAY;
-  if (strcmp(format_str, "month_day") == 0) return DATE_FORMAT_MONTH_DAY;
-  if (strcmp(format_str, "yyyy_mm_dd") == 0) return DATE_FORMAT_YYYY_MM_DD;
-  if (strcmp(format_str, "dd_mm_yyyy") == 0) return DATE_FORMAT_DD_MM_YYYY;
-  if (strcmp(format_str, "mm_dd_yyyy") == 0) return DATE_FORMAT_MM_DD_YYYY;
-  if (strcmp(format_str, "month_year") == 0) return DATE_FORMAT_MONTH_YEAR;
-  if (strcmp(format_str, "weekday_day") == 0) return DATE_FORMAT_WEEKDAY_DAY;
-  if (strcmp(format_str, "step_count") == 0) return DATE_FORMAT_STEP_COUNT;
-  
-  return DATE_FORMAT_WEEKDAY; // Default fallback
+  while (*str) {
+    if (*str >= 'a' && *str <= 'z') {
+      *str = *str - 'a' + 'A';
+    }
+    str++;
+  }
 }
 
 static void draw_bitmap_centered(GContext *ctx, GBitmap *bmp, GRect rect) {
@@ -103,39 +111,26 @@ static void ampm_update_proc(Layer *layer, GContext *ctx) {
   draw_bitmap_centered(ctx, s_is_pm ? s_pm_active_bitmap : s_pm_inactive_bitmap, pm_rect);
 }
 
+static void battery_update_proc(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+  int filled_width = (s_battery_percent * bounds.size.w) / 100;
+  
+  // Clamp to valid range
+  if (filled_width < 0) {
+    filled_width = 0;
+  } else if (filled_width > bounds.size.w) {
+    filled_width = bounds.size.w;
+  }
 
-// Draws the static clock ring (tick marks) only when needed
-static void draw_clock_ring(GContext *ctx, GRect bounds, int radius) {
-  if (!s_show_clock_ring) return;
-  GPoint ring_center = grect_center_point(&bounds);
-  int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3; // Just inside the step tracker
-  if (!s_show_step_tracker) {
-    ring_outer_radius += 10;
-  }
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeEmery) {
-    ring_outer_radius -= 15; // Adjust for round watches
-  }
-  int tick_length_normal = 2;  // Length of normal tick marks
-  int tick_length_major = 5;   // Length of major tick marks (every 5th)
-  graphics_context_set_stroke_color(ctx, GColorDarkGray);
-  for (int i = 0; i < 60; i++) {
-    int32_t angle = (TRIG_MAX_ANGLE * i) / 60;
-    bool is_major = (i % 5 == 0);
-    int tick_length = is_major ? tick_length_major : tick_length_normal;
-    int ring_inner_radius = ring_outer_radius - tick_length;
-    // Calculate outer point of tick mark
-    GPoint outer = GPoint(
-      ring_center.x + (int16_t)((sin_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO),
-      ring_center.y - (int16_t)((cos_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO)
-    );
-    // Calculate inner point of tick mark
-    GPoint inner = GPoint(
-      ring_center.x + (int16_t)((sin_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO),
-      ring_center.y - (int16_t)((cos_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO)
-    );
-    // Draw tick mark with appropriate thickness
-    graphics_context_set_stroke_width(ctx, is_major ? 2 : 1);
-    graphics_draw_line(ctx, outer, inner);
+  // Draw background
+  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_fill_rect(ctx, bounds, 0, GCornerNone);
+  
+  // Draw filled portion
+  if (filled_width > 0) {
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_fill_rect(ctx, GRect(bounds.origin.x, bounds.origin.y, filled_width, bounds.size.h), 
+                       0, GCornerNone);
   }
 }
 
@@ -166,12 +161,56 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   arc_bounds = GRect(center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
 #endif
 
-  // Draw clock ring only if requested (not every second)
-  draw_clock_ring(ctx, bounds, radius); // Only call this when settings change, not every second
+  // Draw clock ring with 60 tick marks (minute/second indicators) if enabled
+  if (s_show_clock_ring) {
+    GPoint ring_center = grect_center_point(&bounds);
+    int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3; // Just inside the step tracker
+    if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeEmery) {
+      ring_outer_radius -= 15; // Adjust for round watches
+    }
+    int tick_length_normal = 2;  // Length of normal tick marks
+    int tick_length_major = 5;   // Length of major tick marks (every 5th)
+    
+    graphics_context_set_stroke_color(ctx, GColorDarkGray);
+    
+    for (int i = 0; i < 60; i++) {
+      int32_t angle = (TRIG_MAX_ANGLE * i) / 60;
+      bool is_major = (i % 5 == 0);
+      int tick_length = is_major ? tick_length_major : tick_length_normal;
+      int ring_inner_radius = ring_outer_radius - tick_length;
+      
+      // Calculate outer point of tick mark
+      GPoint outer = GPoint(
+        ring_center.x + (int16_t)((sin_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO),
+        ring_center.y - (int16_t)((cos_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO)
+      );
+      
+      // Calculate inner point of tick mark
+      GPoint inner = GPoint(
+        ring_center.x + (int16_t)((sin_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO),
+        ring_center.y - (int16_t)((cos_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO)
+      );
+      
+      // Draw tick mark with appropriate thickness
+      graphics_context_set_stroke_width(ctx, is_major ? 2 : 1);
+      graphics_draw_line(ctx, outer, inner);
+    }
+  }
+  
+  // Draw base step track (dark gray arc from 90° to 270°)
+  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
+                       DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
+  
+  // Calculate and draw step progress
+  float progress = (s_step_goal > 0) ? ((float)s_step_count / (float)s_step_goal) : 0;
+  progress = (progress < 0) ? 0 : (progress > 1.0f) ? 1.0f : progress;
 
-  // Draw step tracker (delegated to module)
-  if (s_show_step_tracker) {
-    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_step_tracker_use_line);
+  if (progress > 0) {
+    int32_t start_angle = 270 - (int32_t)(180.0f * progress);
+    graphics_context_set_fill_color(ctx, GColorWhite);
+    graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
+                         DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
   }
 
   // Calculate second indicator position
@@ -183,6 +222,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GPoint screen_center = grect_center_point(&bounds);
   int circle_radius = bounds.size.w / 2 - circle_inset;
   if (circle_radius < 5) circle_radius = 5;
+  
   int32_t angle = (TRIG_MAX_ANGLE * s_current_second) / 60;
   indicator = GPoint(
     screen_center.x + (int16_t)((sin_lookup(angle) * circle_radius) / TRIG_MAX_RATIO),
@@ -197,12 +237,15 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   int bottom = bounds.origin.y + bounds.size.h - 1 - inset;
   int width = right - left;
   int height = bottom - top;
+  
   indicator = GPoint(left, top);
+  
   if (width > 0 && height > 0) {
     int perimeter = 2 * (width + height);
     int dist = (perimeter * s_current_second) / 60;
     int offset = width / 2;
     dist = (dist + offset) % perimeter;
+
     // Determine position along perimeter
     if (dist <= width) {
       // Top edge
@@ -242,21 +285,20 @@ static void update_time() {
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
   
-  // Safety check
-  if (!s_time_layer || !tick_time) {
+  // Safety check: Don't update if UI hasn't been loaded yet
+  if (!s_day_layer || !tick_time) {
     return;
   }
   
-  // Get current step count (only if step tracker is enabled)
-  int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
-  
-  // Update modules
-  top_module_update(tick_time, s_top_module_format, step_count);
-  bottom_module_update(tick_time, s_bottom_module_format, step_count);
+  // Update day of week
+  static char day_buffer[16];
+  strftime(day_buffer, sizeof(day_buffer), "%A", tick_time);
+  to_uppercase(day_buffer);
+  text_layer_set_text(s_day_layer, day_buffer);
   
   // Update time
   static char time_buffer[8];
-  strftime(time_buffer, sizeof(time_buffer), s_use_24h_format ? "%H:%M" : "%I:%M", tick_time);
+  strftime(time_buffer, sizeof(time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
   text_layer_set_text(s_time_layer, time_buffer);
   s_current_second = tick_time->tm_sec;
   
@@ -266,15 +308,28 @@ static void update_time() {
     layer_mark_dirty(s_ampm_layer);
   }
   
-  // Update step tracker and battery
-  if (s_show_step_tracker) {
-    step_tracker_module_update();
-  }
-  battery_module_update();
-  
+  // Update step count
+#if defined(PBL_HEALTH)
+  s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
+#else
+  s_step_count = 0;
+#endif
   if (s_canvas_layer) {
     layer_mark_dirty(s_canvas_layer);
   }
+
+  // Update battery level
+  BatteryChargeState charge = battery_state_service_peek();
+  s_battery_percent = charge.charge_percent;
+  if (s_battery_layer) {
+    layer_mark_dirty(s_battery_layer);
+  }
+  
+  // Update date
+  static char date_buffer[20];
+  strftime(date_buffer, sizeof(date_buffer), "%B %d", tick_time);
+  to_uppercase(date_buffer);
+  text_layer_set_text(s_date_layer, date_buffer);
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
@@ -286,12 +341,26 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 // ============================================================================
 
 static void prv_window_load(Window *window) {
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
   
   window_set_background_color(window, GColorBlack);
-
+  
   // Show splash screen if enabled
-  if (strcmp(s_style_logo, "none") != 0) {
-    splash_logo_show(window, s_style_logo);
+  if (s_show_splash_screen) {
+    // Show splash logo (color or B&W based on user setting)
+    GBitmap *splash_logo = s_use_color_logo ? s_logo_color_bitmap : s_logo_bitmap;
+    if (splash_logo) {
+      GRect logo_bounds = gbitmap_get_bounds(splash_logo);
+      int x = (bounds.size.w - logo_bounds.size.w) / 2;
+      int y = (bounds.size.h - logo_bounds.size.h) / 2;
+      
+      s_splash_logo_layer = bitmap_layer_create(GRect(x, y, logo_bounds.size.w, logo_bounds.size.h));
+      if (s_splash_logo_layer) {
+        bitmap_layer_set_bitmap(s_splash_logo_layer, splash_logo);
+        layer_add_child(window_layer, bitmap_layer_get_layer(s_splash_logo_layer));
+      }
+    }
     
     // Schedule watchface UI load after splash
     app_timer_register(SPLASH_DURATION_MS, load_watchface_ui, window);
@@ -309,17 +378,30 @@ static void load_watchface_ui(void *data) {
   GRect bounds = layer_get_bounds(window_layer);
   
   // Clean up splash logo
-  splash_logo_hide();
+  if (s_splash_logo_layer) {
+    bitmap_layer_destroy(s_splash_logo_layer);
+    s_splash_logo_layer = NULL;
+  }
   
-  // Initialize modules
-  top_module_init(window, bounds);
-  bottom_module_init(window, bounds);
-  battery_module_init(window, bounds);
+  // Create canvas layer for step tracker and second indicator
+  s_canvas_layer = layer_create(bounds);
+  if (s_canvas_layer) {
+    layer_set_update_proc(s_canvas_layer, canvas_update_proc);
+    layer_add_child(window_layer, s_canvas_layer);
+  }
   
-  // Create time text layer (central element)
-  // Position depends on 24h format (centered when 24h, offset when 12h for AM/PM)
-  int time_width = s_use_24h_format ? bounds.size.w : (bounds.size.w - 20);
-  s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 22, time_width, 32));
+  // Create day of week text layer
+  s_day_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 40, bounds.size.w, 24));
+  if (s_day_layer) {
+    text_layer_set_background_color(s_day_layer, GColorClear);
+    text_layer_set_text_color(s_day_layer, GColorWhite);
+    text_layer_set_font(s_day_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    text_layer_set_text_alignment(s_day_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(s_day_layer));
+  }
+  
+  // Create time text layer
+  s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 22, bounds.size.w - 20, 32));
   if (s_time_layer) {
     text_layer_set_background_color(s_time_layer, GColorClear);
     text_layer_set_text_color(s_time_layer, GColorWhite);
@@ -328,30 +410,60 @@ static void load_watchface_ui(void *data) {
     layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   }
   
-  // Create AM/PM indicator layer (only visible in 12h format)
-  if (!s_use_24h_format) {
-    s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 30, bounds.size.h / 2 - 15, 18, 22));
-    if (s_ampm_layer) {
-      layer_set_update_proc(s_ampm_layer, ampm_update_proc);
-      layer_add_child(window_layer, s_ampm_layer);
-    }
+  // Create AM/PM indicator layer
+  s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 30, bounds.size.h / 2 - 15, 18, 22));
+  if (s_ampm_layer) {
+    layer_set_update_proc(s_ampm_layer, ampm_update_proc);
+    layer_add_child(window_layer, s_ampm_layer);
   }
   
-  // Create canvas layer for step tracker and second indicator
-  // Add this LAST so the second ticker appears on top of all other elements
-  s_canvas_layer = layer_create(bounds);
-  if (s_canvas_layer) {
-    layer_set_update_proc(s_canvas_layer, canvas_update_proc);
-    layer_add_child(window_layer, s_canvas_layer);
-  }
-  
-  if (s_show_step_tracker) {
-    step_tracker_module_init(window, bounds, s_canvas_layer);
+  // Create date text layer
+  s_date_layer = text_layer_create(GRect(0, bounds.size.h / 2 + 8, bounds.size.w, 24));
+  if (s_date_layer) {
+    text_layer_set_background_color(s_date_layer, GColorClear);
+    text_layer_set_text_color(s_date_layer, GColorWhite);
+    text_layer_set_font(s_date_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+    text_layer_set_text_alignment(s_date_layer, GTextAlignmentCenter);
+    layer_add_child(window_layer, text_layer_get_layer(s_date_layer));
   }
 
-  // Set step goal from settings
-  if (s_show_step_tracker) {
-    step_tracker_module_set_goal(s_step_goal);
+  // Create battery indicator layer
+  s_battery_layer = layer_create(GRect((bounds.size.w - BATTERY_WIDTH) / 2,
+                                       bounds.size.h / 2 + 8 + 24 + 5,
+                                       BATTERY_WIDTH, BATTERY_HEIGHT));
+  if (s_battery_layer) {
+    layer_set_update_proc(s_battery_layer, battery_update_proc);
+    layer_add_child(window_layer, s_battery_layer);
+  }
+
+  // Create walking icon layer
+  if (s_walking_bitmap) {
+    int icon_x = 5;
+    int icon_y = bounds.size.h / 2 - WALKING_ICON_SIZE + 4;
+#if defined(PBL_ROUND)
+    icon_x += 8;
+    icon_y -= 3;
+#endif
+    s_walk_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_walk_layer) {
+      bitmap_layer_set_bitmap(s_walk_layer, s_walking_bitmap);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_walk_layer));
+    }
+  }
+
+  // Create flag icon layer
+  if (s_flag_bitmap) {
+    int flag_x = bounds.size.w - WALKING_ICON_SIZE - 3;
+    int flag_y = bounds.size.h / 2 - WALKING_ICON_SIZE + 4;
+#if defined(PBL_ROUND)
+    flag_x -= 8;
+    flag_y -= 4;
+#endif
+    s_flag_layer = bitmap_layer_create(GRect(flag_x, flag_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_flag_layer) {
+      bitmap_layer_set_bitmap(s_flag_layer, s_flag_bitmap);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_flag_layer));
+    }
   }
 
   // Initialize time display
@@ -359,10 +471,18 @@ static void load_watchface_ui(void *data) {
 }
 
 static void prv_window_unload(Window *window) {
-  // Destroy central text layers
+  // Destroy text layers
+  if (s_day_layer) {
+    text_layer_destroy(s_day_layer);
+    s_day_layer = NULL;
+  }
   if (s_time_layer) {
     text_layer_destroy(s_time_layer);
     s_time_layer = NULL;
+  }
+  if (s_date_layer) {
+    text_layer_destroy(s_date_layer);
+    s_date_layer = NULL;
   }
   
   // Destroy custom layers
@@ -374,30 +494,53 @@ static void prv_window_unload(Window *window) {
     layer_destroy(s_ampm_layer);
     s_ampm_layer = NULL;
   }
-  
-  // Deinitialize modules
-  top_module_deinit();
-  bottom_module_deinit();
-  battery_module_deinit();
-  if (s_show_step_tracker) {
-    step_tracker_module_deinit();
+  if (s_battery_layer) {
+    layer_destroy(s_battery_layer);
+    s_battery_layer = NULL;
   }
+  
+  // Destroy bitmap layers
+  if (s_walk_layer) {
+    bitmap_layer_destroy(s_walk_layer);
+    s_walk_layer = NULL;
+  }
+  if (s_flag_layer) {
+    bitmap_layer_destroy(s_flag_layer);
+    s_flag_layer = NULL;
+  }
+  
+  // Note: Bitmaps are destroyed in prv_deinit
 }
 
 // ============================================================================
 // SERVICE HANDLERS
 // ============================================================================
 
+static void battery_handler(BatteryChargeState state) {
+  s_battery_percent = state.charge_percent;
+  if (s_battery_layer) {
+    layer_mark_dirty(s_battery_layer);
+  }
+}
+
+#if defined(PBL_HEALTH)
+static void health_handler(HealthEventType event, void *context) {
+  // Update step count when health data changes
+  if (event == HealthEventMovementUpdate || event == HealthEventSignificantUpdate) {
+    s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
+    if (s_canvas_layer) {
+      layer_mark_dirty(s_canvas_layer);
+    }
+  }
+}
+#endif
+
 static void save_settings(void) {
   persist_write_bool(MESSAGE_KEY_SHOW_SECOND_TICKER, s_show_second_ticker);
   persist_write_bool(MESSAGE_KEY_SHOW_CLOCK_RING, s_show_clock_ring);
-  persist_write_bool(MESSAGE_KEY_USE_24H_FORMAT, s_use_24h_format);
-  persist_write_int(MESSAGE_KEY_TOP_MODULE_FORMAT, s_top_module_format);
-  persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
+  persist_write_bool(MESSAGE_KEY_SHOW_SPLASH_SCREEN, s_show_splash_screen);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
-  persist_write_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo);
-  persist_write_bool(MESSAGE_KEY_STEP_TRACKER_STYLE, s_step_tracker_use_line);
-  persist_write_bool(MESSAGE_KEY_SHOW_STEP_TRACKER, s_show_step_tracker);
+  persist_write_bool(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_use_color_logo);
 }
 
 static void load_settings(void) {
@@ -407,30 +550,15 @@ static void load_settings(void) {
   if (persist_exists(MESSAGE_KEY_SHOW_CLOCK_RING)) {
     s_show_clock_ring = persist_read_bool(MESSAGE_KEY_SHOW_CLOCK_RING);
   }
-  if (persist_exists(MESSAGE_KEY_USE_24H_FORMAT)) {
-    s_use_24h_format = persist_read_bool(MESSAGE_KEY_USE_24H_FORMAT);
-  }
-  if (persist_exists(MESSAGE_KEY_TOP_MODULE_FORMAT)) {
-    s_top_module_format = (DateFormatType)persist_read_int(MESSAGE_KEY_TOP_MODULE_FORMAT);
-  }
-  if (persist_exists(MESSAGE_KEY_BOTTOM_MODULE_FORMAT)) {
-    s_bottom_module_format = (DateFormatType)persist_read_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT);
+  if (persist_exists(MESSAGE_KEY_SHOW_SPLASH_SCREEN)) {
+    s_show_splash_screen = persist_read_bool(MESSAGE_KEY_SHOW_SPLASH_SCREEN);
   }
   if (persist_exists(MESSAGE_KEY_STEP_GOAL)) {
     s_step_goal = persist_read_int(MESSAGE_KEY_STEP_GOAL);
     if (s_step_goal < 1000) s_step_goal = 8000;  // Validate stored value
   }
   if (persist_exists(MESSAGE_KEY_SPLASH_LOGO_STYLE)) {
-    static char logo_buf[16];
-    persist_read_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, logo_buf, sizeof(logo_buf));
-    s_style_logo = logo_buf;
-  }
-  if (persist_exists(MESSAGE_KEY_STEP_TRACKER_STYLE)) {
-    s_step_tracker_use_line = persist_read_bool(MESSAGE_KEY_STEP_TRACKER_STYLE);
-  }
-  
-  if (persist_exists(MESSAGE_KEY_SHOW_STEP_TRACKER)) {
-    s_show_step_tracker = persist_read_bool(MESSAGE_KEY_SHOW_STEP_TRACKER);
+    s_use_color_logo = persist_read_bool(MESSAGE_KEY_SPLASH_LOGO_STYLE);
   }
 }
 
@@ -455,18 +583,10 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     }
   }
   
-  // Handle 24h format setting (requires UI reload to reposition time/AM/PM)
-  Tuple *use_24h_tuple = dict_find(iter, MESSAGE_KEY_USE_24H_FORMAT);
-  if (use_24h_tuple) {
-    bool new_24h = (use_24h_tuple->value->int32 == 1);
-    if (new_24h != s_use_24h_format) {
-      s_use_24h_format = new_24h;
-      // Reload UI to adjust layout
-      if (s_window) {
-        prv_window_unload(s_window);
-        load_watchface_ui(s_window);
-      }
-    }
+  // Handle splash screen visibility setting
+  Tuple *show_splash_tuple = dict_find(iter, MESSAGE_KEY_SHOW_SPLASH_SCREEN);
+  if (show_splash_tuple) {
+    s_show_splash_screen = (show_splash_tuple->value->int32 == 1);
   }
   
   // Handle step goal setting
@@ -475,9 +595,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     s_step_goal = atoi(step_goal_tuple->value->cstring);
     if (s_step_goal < 1000) s_step_goal = 1000;
     if (s_step_goal > 50000) s_step_goal = 50000;
-    if (s_show_step_tracker) {
-      step_tracker_module_set_goal(s_step_goal);
-    }
     if (s_canvas_layer) {
       layer_mark_dirty(s_canvas_layer);
     }
@@ -486,57 +603,11 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   // Handle splash logo style setting
   Tuple *logo_style_tuple = dict_find(iter, MESSAGE_KEY_SPLASH_LOGO_STYLE);
   if (logo_style_tuple && logo_style_tuple->value->cstring) {
-    s_style_logo = logo_style_tuple->value->cstring;
-  }
-  
-  // Handle top module format setting
-  Tuple *top_format_tuple = dict_find(iter, MESSAGE_KEY_TOP_MODULE_FORMAT);
-  if (top_format_tuple && top_format_tuple->value->cstring) {
-    s_top_module_format = parse_date_format(top_format_tuple->value->cstring);
-  }
-  
-  // Handle bottom module format setting
-  Tuple *bottom_format_tuple = dict_find(iter, MESSAGE_KEY_BOTTOM_MODULE_FORMAT);
-  if (bottom_format_tuple && bottom_format_tuple->value->cstring) {
-    s_bottom_module_format = parse_date_format(bottom_format_tuple->value->cstring);
-  }
-  
-  // Handle step tracker style setting
-  Tuple *tracker_style_tuple = dict_find(iter, MESSAGE_KEY_STEP_TRACKER_STYLE);
-  if (tracker_style_tuple) {
-    s_step_tracker_use_line = (tracker_style_tuple->value->int32 == 1);
-    if (s_canvas_layer) {
-      layer_mark_dirty(s_canvas_layer);
-    }
-  }
-  
-  // Handle show step tracker setting
-  Tuple *show_tracker_tuple = dict_find(iter, MESSAGE_KEY_SHOW_STEP_TRACKER);
-  if (show_tracker_tuple) {
-    s_show_step_tracker = (show_tracker_tuple->value->int32 == 1);
-    if (s_canvas_layer) {
-      layer_mark_dirty(s_canvas_layer);
-    }
+    s_use_color_logo = (strcmp(logo_style_tuple->value->cstring, "color") == 0);
   }
 
   save_settings();
-  
-  // Handle step tracker enable/disable
-  if (!s_show_step_tracker) {
-    step_tracker_module_deinit();
-  } else {
-    step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
-  }
-  
-  // Force full redraw of all elements
-  if (s_canvas_layer) {
-    layer_mark_dirty(s_canvas_layer);
-  }
-  if (s_ampm_layer) {
-    layer_mark_dirty(s_ampm_layer);
-  }
-  update_time();
-  battery_module_update();
+  layer_mark_dirty(s_canvas_layer);
 }
 
 // ============================================================================
@@ -551,12 +622,15 @@ static void prv_init(void) {
   app_message_register_inbox_received(inbox_received_handler);
   app_message_open(256, 256);
   
-  // Load bitmap resources (only central)
-  splash_logo_init();
+  // Load bitmap resources
+  s_logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_LOGO_BW_IMAGE);
+  s_logo_color_bitmap = gbitmap_create_with_resource(RESOURCE_ID_LOGO_COLOR_IMAGE);
   s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
   s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
   s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);
   s_pm_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_INACTIVE_IMAGE);
+  s_walking_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_IMAGE);
+  s_flag_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FLAG_IMAGE);
   
   // Create and set up main window
   s_window = window_create();
@@ -568,25 +642,26 @@ static void prv_init(void) {
     window_stack_push(s_window, true);
   }
   
-  // Subscribe to services (central only)
+  // Subscribe to services
   tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  battery_state_service_subscribe(battery_handler);
   
-  // Modules handle their own subscriptions
-  battery_module_subscribe();
-  if (s_show_step_tracker) {
-    step_tracker_module_subscribe();
-  }
+#if defined(PBL_HEALTH)
+  // Subscribe to health events for step tracking
+  health_service_events_subscribe(health_handler, NULL);
+  // Initialize step count
+  s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
+#endif
 }
 
 static void prv_deinit(void) {
   // Unsubscribe from services
   tick_timer_service_unsubscribe();
+  battery_state_service_unsubscribe();
   
-  // Modules handle their own unsubscriptions
-  battery_module_unsubscribe();
-  if (s_show_step_tracker) {
-    step_tracker_module_unsubscribe();
-  }
+#if defined(PBL_HEALTH)
+  health_service_events_unsubscribe();
+#endif
   
   // Destroy window
   if (s_window) {
@@ -594,8 +669,15 @@ static void prv_deinit(void) {
     s_window = NULL;
   }
   
-  // Destroy bitmap resources (only central/splash elements)
-  splash_logo_cleanup();
+  // Destroy bitmap resources
+  if (s_logo_bitmap) {
+    gbitmap_destroy(s_logo_bitmap);
+    s_logo_bitmap = NULL;
+  }
+  if (s_logo_color_bitmap) {
+    gbitmap_destroy(s_logo_color_bitmap);
+    s_logo_color_bitmap = NULL;
+  }
   if (s_am_active_bitmap) {
     gbitmap_destroy(s_am_active_bitmap);
     s_am_active_bitmap = NULL;
@@ -611,6 +693,14 @@ static void prv_deinit(void) {
   if (s_pm_inactive_bitmap) {
     gbitmap_destroy(s_pm_inactive_bitmap);
     s_pm_inactive_bitmap = NULL;
+  }
+  if (s_walking_bitmap) {
+    gbitmap_destroy(s_walking_bitmap);
+    s_walking_bitmap = NULL;
+  }
+  if (s_flag_bitmap) {
+    gbitmap_destroy(s_flag_bitmap);
+    s_flag_bitmap = NULL;
   }
 }
 
