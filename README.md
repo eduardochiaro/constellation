@@ -2,26 +2,27 @@
 
 A Pebble watchface inspired by Starfield.
 
-## Store
-
 ## Screenshots
 
 ### Pebble Time Round
-!(Chalk 1)[assets/chalk_1.png]
-!(Chalk 2)[assets/chalk_2.png]
+![Chalk 1](assets/chalk_1.png)
+![Chalk 2](assets/chalk_2.png)
 
 ### Pebble/Steel/2
-!(Aplite 1)[assets/aplite_1.png]
-!(Aplite 2)[assets/aplite_2.png]
+![Aplite 1](assets/aplite_1.png)
+![Aplite 2](assets/aplite_2.png)
 
 ### Pebble Time/Time Steel
-!(Basalt 1)[assets/basalt_1.png]
-!(Basalt 2)[assets/basalt_2.png]
+![Basalt 1](assets/basalt_1.png)
+![Basalt 2](assets/basalt_2.png)
 
 
 ### Pebble Time 2
-!(Emery 1)[assets/emery_1.png]
-!(Emery 2)[assets/emery_2.png]
+![Emery 1](assets/emery_1.png)
+![Emery 2](assets/emery_2.png)
+
+## Store
+[Pebble App Store](https://apps.rebble.io/en_US/application/695299cfda150100090722b8)
 
 ## Features
 
