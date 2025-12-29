@@ -20,13 +20,13 @@
         "type": "toggle",
         "messageKey": "SHOW_CLOCK_RING",
         "label": "Show Clock Ring",
-        "defaultValue": true
+        "defaultValue": false
       },
       {
         "type": "toggle",
-        "messageKey": "SHOW_SPLASH_SCREEN",
-        "label": "Show Splash Screen",
-        "defaultValue": true
+        "messageKey": "USE_24H_FORMAT",
+        "label": "Use 24-Hour Format",
+        "defaultValue": false
       },
       {
         "type": "select",
@@ -35,12 +35,109 @@
         "defaultValue": "bw",
         "options": [
           {
-            "label": "Black & White",
+            "label": "None",
+            "value": "none"
+          },
+          {
+            "label": "Constellation (Black & White)",
             "value": "bw"
           },
           {
-            "label": "Color",
+            "label": "Constellation (Color)",
             "value": "color"
+          },
+          {
+            "label": "House Varuun Logo",
+            "value": "house_varuun"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Modules"
+      },
+      {
+        "type": "select",
+        "messageKey": "TOP_MODULE_FORMAT",
+        "label": "Top Display Format",
+        "defaultValue": "weekday",
+        "options": [
+          {
+            "label": "Weekday",
+            "value": "weekday"
+          },
+          {
+            "label": "Month Day",
+            "value": "month_day"
+          },
+          {
+            "label": "YYYY-MM-DD",
+            "value": "yyyy_mm_dd"
+          },
+          {
+            "label": "DD/MM/YYYY",
+            "value": "dd_mm_yyyy"
+          },
+          {
+            "label": "MM/DD/YYYY",
+            "value": "mm_dd_yyyy"
+          },
+          {
+            "label": "Month Year",
+            "value": "month_year"
+          },
+          {
+            "label": "Weekday Day",
+            "value": "weekday_day"
+          },
+          {
+            "label": "Step Count",
+            "value": "step_count"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "BOTTOM_MODULE_FORMAT",
+        "label": "Bottom Display Format",
+        "defaultValue": "month_day",
+        "options": [
+          {
+            "label": "Weekday",
+            "value": "weekday"
+          },
+          {
+            "label": "Month Day",
+            "value": "month_day"
+          },
+          {
+            "label": "YYYY-MM-DD",
+            "value": "yyyy_mm_dd"
+          },
+          {
+            "label": "DD/MM/YYYY",
+            "value": "dd_mm_yyyy"
+          },
+          {
+            "label": "MM/DD/YYYY",
+            "value": "mm_dd_yyyy"
+          },
+          {
+            "label": "Month Year",
+            "value": "month_year"
+          },
+          {
+            "label": "Weekday Day",
+            "value": "weekday_day"
+          },
+          {
+            "label": "Step Count",
+            "value": "step_count"
           }
         ]
       }
@@ -54,6 +151,12 @@
         "defaultValue": "Health"
       },
       {
+        "type": "toggle",
+        "messageKey": "SHOW_STEP_TRACKER",
+        "label": "Show Step Tracker",
+        "defaultValue": true
+      },
+      {
         "type": "input",
         "messageKey": "STEP_GOAL",
         "label": "Daily Step Goal",
@@ -63,8 +166,13 @@
           "min": 1000,
           "max": 50000,
           "step": 500
-        }
-      }
+        }      
+      },
+      {
+        "type": "toggle",
+        "messageKey": "STEP_TRACKER_STYLE",
+        "label": "Use Line Style (Better for rectangular displays)",
+        "defaultValue": false      }
     ]
   },
   {

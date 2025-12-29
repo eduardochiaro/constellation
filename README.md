@@ -40,3 +40,15 @@ Access watchface settings through the Pebble app on your phone:
 1. **Show Second Ticker**: Toggle the animated second indicator on/off
 2. **Step Goal**: Set your daily step target (1,000 - 50,000 steps)
 3. **Splash Logo Style**: Choose between black & white, color or no splash logo
+
+### Settings
+- **Show Second Ticker**: Toggle second indicator
+- **Show Clock Ring**: Toggle minute/second tick marks
+- **Show Splash Screen**: Toggle splash logo
+- **Use 24-Hour Format**: Toggle 12h/24h time
+- **Splash Logo Style**: Choose color or B&W logo
+- **Top Display Format**: 7 date formats or step count
+- **Bottom Display Format**: 7 date formats or step count
+- **Daily Step Goal**: Set your step goal
+- **Show Step Tracker**: Show/hide step tracker
+- **Step Tracker Style**: Arc or line style (line for rectangular displays)
