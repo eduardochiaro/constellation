@@ -89,10 +89,10 @@ void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int rad
     
     // Draw base perimeter (dark gray)
     graphics_context_set_fill_color(ctx, GColorDarkGray);
-    // Left side
-    graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
     // Bottom
     graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
+    // Left side
+    graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
     // Right side
     graphics_fill_rect(ctx, GRect(right_x, top_y, line_width, left_height), 0, GCornerNone);
     
@@ -101,9 +101,9 @@ void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int rad
       graphics_context_set_fill_color(ctx, GColorWhite);
       
       if (progress_distance <= left_height) {
-        // Progress on left side (bottom to top)
+        // Progress on left side (top to bottom)
         int fill_height = progress_distance;
-        graphics_fill_rect(ctx, GRect(left_x, bottom_y - fill_height, line_width, fill_height), 0, GCornerNone);
+        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, fill_height), 0, GCornerNone);
       } else if (progress_distance <= left_height + bottom_width) {
         // Progress on left side + partial bottom
         graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
