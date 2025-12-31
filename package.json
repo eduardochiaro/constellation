@@ -75,17 +75,22 @@
         {
           "type": "bitmap",
           "name": "CONSTELLATION_BW_LOGO_IMAGE",
-          "file": "constellation_bw_logo.png"
+          "file": "splash_logos/constellation_bw_logo.png"
         },
         {
           "type": "bitmap",
           "name": "CONSTELLATION_COLOR_LOGO_IMAGE",
-          "file": "constellation_color_logo.png"
+          "file": "splash_logos/constellation_color_logo.png"
         },
         {
           "type": "bitmap",
           "name": "HOUSEVARUUN_LOGO_IMAGE",
-          "file": "house_varuun_logo.png"
+          "file": "splash_logos/house_varuun_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "FREESTAR_LOGO_IMAGE",
+          "file": "splash_logos/freestar_logo.png"
         },
         {
           "type": "bitmap",
