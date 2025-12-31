@@ -94,6 +94,11 @@
         },
         {
           "type": "bitmap",
+          "name": "SYSDEF_LOGO_IMAGE",
+          "file": "splash_logos/sysdef_logo.png"
+        },
+        {
+          "type": "bitmap",
           "name": "MENU_ICON",
           "file": "menu_icon.png",
           "menuIcon": true
