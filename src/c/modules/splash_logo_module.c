@@ -5,12 +5,14 @@ static BitmapLayer *s_splash_logo_layer;
 static GBitmap *s_cbw_logo_bitmap;
 static GBitmap *s_ccolor_logo_bitmap;
 static GBitmap *s_housevarun_logo_bitmap;
+static GBitmap *s_freestar_logo_bitmap;
 
 void splash_logo_init(void) {
 
   s_cbw_logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CONSTELLATION_BW_LOGO_IMAGE);
   s_ccolor_logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_CONSTELLATION_COLOR_LOGO_IMAGE);
   s_housevarun_logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_HOUSEVARUUN_LOGO_IMAGE);
+  s_freestar_logo_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FREESTAR_LOGO_IMAGE);
 }
 
 void splash_logo_show(Window *window, char *s_style_logo) {
@@ -25,6 +27,8 @@ void splash_logo_show(Window *window, char *s_style_logo) {
       splash_logo = s_cbw_logo_bitmap;
     } else if (strcmp(s_style_logo, "house_varuun") == 0) {
       splash_logo = s_housevarun_logo_bitmap;
+    } else if (strcmp(s_style_logo, "freestar") == 0) {
+      splash_logo = s_freestar_logo_bitmap;
     }
     
     if (splash_logo) {
@@ -59,5 +63,9 @@ void splash_logo_cleanup(void) {
   if (s_housevarun_logo_bitmap) {
     gbitmap_destroy(s_housevarun_logo_bitmap);
     s_housevarun_logo_bitmap = NULL;
+  }
+  if (s_freestar_logo_bitmap) {
+    gbitmap_destroy(s_freestar_logo_bitmap);
+    s_freestar_logo_bitmap = NULL;
   }
 }

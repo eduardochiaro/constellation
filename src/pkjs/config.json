@@ -47,8 +47,12 @@
             "value": "color"
           },
           {
-            "label": "House Varuun Logo",
+            "label": "House Varuun",
             "value": "house_varuun"
+          },
+          {
+            "label": "Freestar Collective",
+            "value": "freestar"
           }
         ]
       }
