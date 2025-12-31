@@ -80,7 +80,7 @@ void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int rad
     int top_y = bounds.size.h / 2 + 7; // Start from middle-bottom area
     int bottom_y = bounds.size.h - margin - line_width;
     
-    int left_height = bottom_y - top_y;
+    int left_height = bottom_y - top_y + 15;
     int bottom_width = right_x - left_x;
     int total_perimeter = left_height + bottom_width + left_height; // left + bottom + right
     
@@ -89,31 +89,28 @@ void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int rad
     
     // Draw base perimeter (dark gray)
     graphics_context_set_fill_color(ctx, GColorDarkGray);
-    // Bottom
-    graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
     // Left side
     graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
+    // Bottom
+    graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
     // Right side
     graphics_fill_rect(ctx, GRect(right_x, top_y, line_width, left_height), 0, GCornerNone);
-    
-    // Draw progress (white)
+
+    // Draw progress (white) above all gray bars
     if (progress > 0) {
       graphics_context_set_fill_color(ctx, GColorWhite);
-      
       if (progress_distance <= left_height) {
         // Progress on left side (top to bottom)
         int fill_height = progress_distance;
         graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, fill_height), 0, GCornerNone);
       } else if (progress_distance <= left_height + bottom_width) {
-        // Progress on left side + partial bottom
         graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
         int bottom_progress = progress_distance - left_height;
         graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_progress, line_width), 0, GCornerNone);
       } else {
-        // Progress on left side + bottom + partial right side
         graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
         graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
-        int right_progress = progress_distance - left_height - bottom_width;
+        int right_progress = progress_distance - left_height - bottom_width - 15;
         graphics_fill_rect(ctx, GRect(right_x, bottom_y - right_progress, line_width, right_progress), 0, GCornerNone);
       }
     }
