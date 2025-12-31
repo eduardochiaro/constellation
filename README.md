@@ -30,7 +30,7 @@ A Pebble watchface inspired by Starfield.
 - **Step Tracker**: Visual arc display showing daily step progress with customizable goal
 - **Battery Indicator**: Real-time battery level display
 - **Second Ticker**: Optional animated second indicator (can be hidden via settings)
-- **Splash Screen**: Customizable startup logo (black & white, color, none)
+- **Splash Screen**: Customizable startup logo (several options or none)
 - **Multi-Platform**: Supports all Pebble watches (Aplite, Basalt, Chalk, Diorite, Emery, Flint)
 
 ## Configuration Options
