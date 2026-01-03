@@ -4,6 +4,7 @@
 #include "modules/battery_module.h"
 #include "modules/step_tracker_module.h"
 #include "modules/splash_logo_module.h"
+#include "modules/moon_view_module.h"
 
 // ============================================================================
 // CONSTANTS
@@ -281,6 +282,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
 }
 
+static void accel_tap_handler(AccelAxisType axis, int32_t direction) {
+  moon_view_module_show();
+}
+
 // ============================================================================
 // WINDOW HANDLERS
 // ============================================================================
@@ -553,6 +558,7 @@ static void prv_init(void) {
   
   // Load bitmap resources (only central)
   splash_logo_init();
+  moon_view_module_init();
   s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
   s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
   s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);
@@ -570,6 +576,7 @@ static void prv_init(void) {
   
   // Subscribe to services (central only)
   tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  accel_tap_service_subscribe(accel_tap_handler);
   
   // Modules handle their own subscriptions
   battery_module_subscribe();
@@ -581,12 +588,16 @@ static void prv_init(void) {
 static void prv_deinit(void) {
   // Unsubscribe from services
   tick_timer_service_unsubscribe();
+  accel_tap_service_unsubscribe();
   
   // Modules handle their own unsubscriptions
   battery_module_unsubscribe();
   if (s_show_step_tracker) {
     step_tracker_module_unsubscribe();
   }
+  
+  // Deinit moon view module
+  moon_view_module_deinit();
   
   // Destroy window
   if (s_window) {
