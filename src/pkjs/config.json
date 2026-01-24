@@ -184,7 +184,9 @@
         "type": "toggle",
         "messageKey": "STEP_TRACKER_STYLE",
         "label": "Use Line Style (Better for rectangular displays)",
-        "defaultValue": false      }
+        "defaultValue": false,
+        "capabilities": ["RECT"]
+       }
     ]
   },
   {
