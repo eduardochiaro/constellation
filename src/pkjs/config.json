@@ -57,7 +57,15 @@
             "value": "crimson"
           }
         ]
-      }
+      },
+      {
+        "type": "toggle",
+        "messageKey": "TRACKER_STYLE",
+        "label": "Use Line Style for trackers",
+        "defaultValue": false,
+        "capabilities": ["RECT"],
+        "description": "Line style is better for rectangular displays."
+       }
     ]
   },
   {
@@ -173,14 +181,7 @@
           "max": 50000,
           "step": 500
         }      
-      },
-      {
-        "type": "toggle",
-        "messageKey": "STEP_TRACKER_STYLE",
-        "label": "Use Line Style (Better for rectangular displays)",
-        "defaultValue": false,
-        "capabilities": ["RECT"]
-       }
+      }
     ]
   },
   {

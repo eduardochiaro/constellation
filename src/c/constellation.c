@@ -52,7 +52,7 @@ static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
 static DateFormatType s_bottom_module_format = DATE_FORMAT_MONTH_DAY;
 static int s_step_goal = 8000;
 static char s_style_logo[16] = "bw";
-static bool s_step_tracker_use_line = false;
+static bool s_tracker_use_line = false;
 
 // ============================================================================
 // FORWARD DECLARATIONS
@@ -173,7 +173,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
 
   // Draw step tracker (delegated to module)
   if (s_show_step_tracker) {
-    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_step_tracker_use_line);
+    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_tracker_use_line);
   }
 
   // Calculate second indicator position
@@ -404,7 +404,7 @@ static void save_settings(void) {
   persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
   persist_write_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo);
-  persist_write_bool(MESSAGE_KEY_STEP_TRACKER_STYLE, s_step_tracker_use_line);
+  persist_write_bool(MESSAGE_KEY_TRACKER_STYLE, s_tracker_use_line);
   persist_write_bool(MESSAGE_KEY_SHOW_STEP_TRACKER, s_show_step_tracker);
 }
 
@@ -428,8 +428,8 @@ static void load_settings(void) {
   if (persist_exists(MESSAGE_KEY_SPLASH_LOGO_STYLE)) {
     persist_read_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo, sizeof(s_style_logo));
   }
-  if (persist_exists(MESSAGE_KEY_STEP_TRACKER_STYLE)) {
-    s_step_tracker_use_line = persist_read_bool(MESSAGE_KEY_STEP_TRACKER_STYLE);
+  if (persist_exists(MESSAGE_KEY_TRACKER_STYLE)) {
+    s_tracker_use_line = persist_read_bool(MESSAGE_KEY_TRACKER_STYLE);
   }
   
   if (persist_exists(MESSAGE_KEY_SHOW_STEP_TRACKER)) {
@@ -504,9 +504,10 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   }
   
   // Handle step tracker style setting
-  Tuple *tracker_style_tuple = dict_find(iter, MESSAGE_KEY_STEP_TRACKER_STYLE);
+  Tuple *tracker_style_tuple = dict_find(iter, MESSAGE_KEY_TRACKER_STYLE);
   if (tracker_style_tuple) {
-    s_step_tracker_use_line = (tracker_style_tuple->value->int32 == 1);
+    s_tracker_use_line = (tracker_style_tuple->value->int32 == 1);
+    moon_view_module_set_line_style(s_tracker_use_line);
     if (s_canvas_layer) {
       layer_mark_dirty(s_canvas_layer);
     }
@@ -556,6 +557,7 @@ static void prv_init(void) {
   // Load bitmap resources (only central)
   splash_logo_init();
   moon_view_module_init();
+  moon_view_module_set_line_style(s_tracker_use_line);
   s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
   s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
   s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);
