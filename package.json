@@ -114,6 +114,46 @@
         },
         {
           "type": "bitmap",
+          "name": "MOON_BACKGROUND_IMAGE",
+          "file": "moon/moon_background.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_1_IMAGE",
+          "file": "moon/moon_phase_1.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_2_IMAGE",
+          "file": "moon/moon_phase_2.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_3_IMAGE",
+          "file": "moon/moon_phase_3.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_4_IMAGE",
+          "file": "moon/moon_phase_4.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_5_IMAGE",
+          "file": "moon/moon_phase_5.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_6_IMAGE",
+          "file": "moon/moon_phase_6.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_7_IMAGE",
+          "file": "moon/moon_phase_7.png"
+        },
+        {
+          "type": "bitmap",
           "name": "MENU_ICON",
           "file": "menu_icon.png",
           "menuIcon": true

@@ -7,10 +7,8 @@ module.exports = function(minified) {
   function toggleStepTracker() {
     if (this.get()) {
       clayConfig.getItemByMessageKey('STEP_GOAL').enable();
-      clayConfig.getItemByMessageKey('TRACKER_STYLE').enable();
     } else {
       clayConfig.getItemByMessageKey('STEP_GOAL').disable();
-      clayConfig.getItemByMessageKey('TRACKER_STYLE').disable();
     }
   }
 

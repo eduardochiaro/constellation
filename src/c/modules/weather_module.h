@@ -13,6 +13,7 @@ typedef struct {
   char sunset[20];          // Sunset time ISO format
   uint8_t moon_phase;       // Moon phase 0-100 (0=new, 50=full, 100=new)
   char moon_phase_name[20]; // Moon phase name
+  int16_t moon_phase_icon; // Moon phase icon
   time_t timestamp;         // When data was fetched
   bool is_valid;            // Whether we have valid data
 } WeatherData;
