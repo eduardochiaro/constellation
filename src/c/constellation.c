@@ -5,6 +5,8 @@
 #include "modules/step_tracker_module.h"
 #include "modules/splash_logo_module.h"
 #include "modules/moon_view_module.h"
+#include "modules/weather_module.h"
+#include "modules/weather_display_module.h"
 
 // ============================================================================
 // CONSTANTS
@@ -44,13 +46,12 @@ static int s_current_second;
 
 // User settings (persisted)
 static bool s_show_second_ticker = true;
-static bool s_show_clock_ring = true;
-static bool s_use_24h_format = false;
+static bool s_show_clock_ring = false;
 static bool s_show_step_tracker = true;
 static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
 static DateFormatType s_bottom_module_format = DATE_FORMAT_MONTH_DAY;
 static int s_step_goal = 8000;
-static char* s_style_logo = "bw";
+static char s_style_logo[16] = "bw";
 static bool s_step_tracker_use_line = false;
 
 // ============================================================================
@@ -252,12 +253,13 @@ static void update_time() {
   int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
   
   // Update modules
+  weather_display_module_update();
   top_module_update(tick_time, s_top_module_format, step_count);
   bottom_module_update(tick_time, s_bottom_module_format, step_count);
   
   // Update time
   static char time_buffer[8];
-  strftime(time_buffer, sizeof(time_buffer), s_use_24h_format ? "%H:%M" : "%I:%M", tick_time);
+  strftime(time_buffer, sizeof(time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
   text_layer_set_text(s_time_layer, time_buffer);
   s_current_second = tick_time->tm_sec;
   
@@ -316,14 +318,9 @@ static void load_watchface_ui(void *data) {
   // Clean up splash logo
   splash_logo_hide();
   
-  // Initialize modules
-  top_module_init(window, bounds);
-  bottom_module_init(window, bounds);
-  battery_module_init(window, bounds);
-  
   // Create time text layer (central element)
   // Position depends on 24h format (centered when 24h, offset when 12h for AM/PM)
-  int time_width = s_use_24h_format ? bounds.size.w : (bounds.size.w - 20);
+  int time_width = clock_is_24h_style() ? bounds.size.w : (bounds.size.w - 20);
   s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 22, time_width, 32));
   if (s_time_layer) {
     text_layer_set_background_color(s_time_layer, GColorClear);
@@ -334,7 +331,7 @@ static void load_watchface_ui(void *data) {
   }
   
   // Create AM/PM indicator layer (only visible in 12h format)
-  if (!s_use_24h_format) {
+  if (!clock_is_24h_style()) {
     s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 30, bounds.size.h / 2 - 15, 18, 22));
     if (s_ampm_layer) {
       layer_set_update_proc(s_ampm_layer, ampm_update_proc);
@@ -349,6 +346,12 @@ static void load_watchface_ui(void *data) {
     layer_set_update_proc(s_canvas_layer, canvas_update_proc);
     layer_add_child(window_layer, s_canvas_layer);
   }
+  
+  // Initialize modules
+  weather_display_module_init(window, bounds);
+  top_module_init(window, bounds);
+  bottom_module_init(window, bounds);
+  battery_module_init(window, bounds);
   
   if (s_show_step_tracker) {
     step_tracker_module_init(window, bounds, s_canvas_layer);
@@ -381,6 +384,7 @@ static void prv_window_unload(Window *window) {
   }
   
   // Deinitialize modules
+  weather_display_module_deinit();
   top_module_deinit();
   bottom_module_deinit();
   battery_module_deinit();
@@ -396,7 +400,6 @@ static void prv_window_unload(Window *window) {
 static void save_settings(void) {
   persist_write_bool(MESSAGE_KEY_SHOW_SECOND_TICKER, s_show_second_ticker);
   persist_write_bool(MESSAGE_KEY_SHOW_CLOCK_RING, s_show_clock_ring);
-  persist_write_bool(MESSAGE_KEY_USE_24H_FORMAT, s_use_24h_format);
   persist_write_int(MESSAGE_KEY_TOP_MODULE_FORMAT, s_top_module_format);
   persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
@@ -412,9 +415,6 @@ static void load_settings(void) {
   if (persist_exists(MESSAGE_KEY_SHOW_CLOCK_RING)) {
     s_show_clock_ring = persist_read_bool(MESSAGE_KEY_SHOW_CLOCK_RING);
   }
-  if (persist_exists(MESSAGE_KEY_USE_24H_FORMAT)) {
-    s_use_24h_format = persist_read_bool(MESSAGE_KEY_USE_24H_FORMAT);
-  }
   if (persist_exists(MESSAGE_KEY_TOP_MODULE_FORMAT)) {
     s_top_module_format = (DateFormatType)persist_read_int(MESSAGE_KEY_TOP_MODULE_FORMAT);
   }
@@ -426,9 +426,7 @@ static void load_settings(void) {
     if (s_step_goal < 1000) s_step_goal = 8000;  // Validate stored value
   }
   if (persist_exists(MESSAGE_KEY_SPLASH_LOGO_STYLE)) {
-    static char logo_buf[16];
-    persist_read_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, logo_buf, sizeof(logo_buf));
-    s_style_logo = logo_buf;
+    persist_read_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo, sizeof(s_style_logo));
   }
   if (persist_exists(MESSAGE_KEY_STEP_TRACKER_STYLE)) {
     s_step_tracker_use_line = persist_read_bool(MESSAGE_KEY_STEP_TRACKER_STYLE);
@@ -441,6 +439,18 @@ static void load_settings(void) {
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   if (!iter) return;
+  
+  // Handle weather data
+  Tuple *weather_tuple = dict_find(iter, MESSAGE_KEY_WEATHER_DATA);
+  if (weather_tuple && weather_tuple->type == TUPLE_CSTRING) {
+    APP_LOG(APP_LOG_LEVEL_INFO, "Received weather data");
+    weather_module_update(weather_tuple->value->cstring);
+    weather_display_module_update();
+    // Trigger UI update if needed
+    if (s_canvas_layer) {
+      layer_mark_dirty(s_canvas_layer);
+    }
+  }
   
   // Handle second ticker visibility setting
   Tuple *show_ticker_tuple = dict_find(iter, MESSAGE_KEY_SHOW_SECOND_TICKER);
@@ -460,20 +470,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     }
   }
   
-  // Handle 24h format setting (requires UI reload to reposition time/AM/PM)
-  Tuple *use_24h_tuple = dict_find(iter, MESSAGE_KEY_USE_24H_FORMAT);
-  if (use_24h_tuple) {
-    bool new_24h = (use_24h_tuple->value->int32 == 1);
-    if (new_24h != s_use_24h_format) {
-      s_use_24h_format = new_24h;
-      // Reload UI to adjust layout
-      if (s_window) {
-        prv_window_unload(s_window);
-        load_watchface_ui(s_window);
-      }
-    }
-  }
-  
   // Handle step goal setting
   Tuple *step_goal_tuple = dict_find(iter, MESSAGE_KEY_STEP_GOAL);
   if (step_goal_tuple) {
@@ -490,19 +486,20 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   
   // Handle splash logo style setting
   Tuple *logo_style_tuple = dict_find(iter, MESSAGE_KEY_SPLASH_LOGO_STYLE);
-  if (logo_style_tuple && logo_style_tuple->value->cstring) {
-    s_style_logo = logo_style_tuple->value->cstring;
+  if (logo_style_tuple) {
+    strncpy(s_style_logo, logo_style_tuple->value->cstring, sizeof(s_style_logo) - 1);
+    s_style_logo[sizeof(s_style_logo) - 1] = '\0';
   }
   
   // Handle top module format setting
   Tuple *top_format_tuple = dict_find(iter, MESSAGE_KEY_TOP_MODULE_FORMAT);
-  if (top_format_tuple && top_format_tuple->value->cstring) {
+  if (top_format_tuple) {
     s_top_module_format = parse_date_format(top_format_tuple->value->cstring);
   }
   
   // Handle bottom module format setting
   Tuple *bottom_format_tuple = dict_find(iter, MESSAGE_KEY_BOTTOM_MODULE_FORMAT);
-  if (bottom_format_tuple && bottom_format_tuple->value->cstring) {
+  if (bottom_format_tuple) {
     s_bottom_module_format = parse_date_format(bottom_format_tuple->value->cstring);
   }
   
@@ -524,24 +521,25 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     }
   }
 
-  save_settings();
-  
-  // Handle step tracker enable/disable
-  if (!s_show_step_tracker) {
-    step_tracker_module_deinit();
-  } else {
-    step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
-  }
-  
-  // Force full redraw of all elements
+  // Only apply settings and redraw if the watchface UI has loaded
   if (s_canvas_layer) {
+    save_settings();
+    
+    // Handle step tracker enable/disable
+    if (!s_show_step_tracker) {
+      step_tracker_module_deinit();
+    } else {
+      step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
+    }
+    
+    // Force full redraw of all elements
     layer_mark_dirty(s_canvas_layer);
+    if (s_ampm_layer) {
+      layer_mark_dirty(s_ampm_layer);
+    }
+    update_time();
+    battery_module_update();
   }
-  if (s_ampm_layer) {
-    layer_mark_dirty(s_ampm_layer);
-  }
-  update_time();
-  battery_module_update();
 }
 
 // ============================================================================
@@ -552,9 +550,8 @@ static void prv_init(void) {
   // Load user settings
   load_settings();
   
-  // Set up app message for config communication
-  app_message_register_inbox_received(inbox_received_handler);
-  app_message_open(256, 256);
+  // Initialize weather module
+  weather_module_init();
   
   // Load bitmap resources (only central)
   splash_logo_init();
@@ -583,6 +580,10 @@ static void prv_init(void) {
   if (s_show_step_tracker) {
     step_tracker_module_subscribe();
   }
+  
+  // Set up app message for config communication
+  app_message_register_inbox_received(inbox_received_handler);
+  app_message_open(512, 512);  // Increased buffer size for weather data
 }
 
 static void prv_deinit(void) {
@@ -598,6 +599,9 @@ static void prv_deinit(void) {
   
   // Deinit moon view module
   moon_view_module_deinit();
+  
+  // Deinit weather module
+  weather_module_deinit();
   
   // Destroy window
   if (s_window) {
