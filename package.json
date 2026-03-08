@@ -1,7 +1,7 @@
 {
   "name": "constellation",
   "author": "Eduardo Chiaro",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "keywords": [
     "pebble-watchface",
     "pebble",
@@ -34,11 +34,11 @@
       "SPLASH_LOGO_STYLE",
       "SHOW_CLOCK_RING",
       "SHOW_SPLASH_SCREEN",
-      "USE_24H_FORMAT",
       "TOP_MODULE_FORMAT",
       "BOTTOM_MODULE_FORMAT",
       "STEP_TRACKER_STYLE",
-      "SHOW_STEP_TRACKER"
+      "SHOW_STEP_TRACKER",
+      "WEATHER_DATA"
     ],
     "resources": {
       "media": [
@@ -71,6 +71,16 @@
           "type": "bitmap",
           "name": "FLAG_IMAGE",
           "file": "flag.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "SUN_UP_IMAGE",
+          "file": "sun_up.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "SUN_DOWN_IMAGE",
+          "file": "sun_down.png"
         },
         {
           "type": "bitmap",

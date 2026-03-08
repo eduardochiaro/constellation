@@ -39,6 +39,7 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
     s_walk_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
     if (s_walk_layer) {
       bitmap_layer_set_bitmap(s_walk_layer, s_walking_bitmap);
+      bitmap_layer_set_compositing_mode(s_walk_layer, GCompOpSet);
       layer_add_child(window_layer, bitmap_layer_get_layer(s_walk_layer));
     }
   }
@@ -54,6 +55,7 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
     s_flag_layer = bitmap_layer_create(GRect(flag_x, flag_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
     if (s_flag_layer) {
       bitmap_layer_set_bitmap(s_flag_layer, s_flag_bitmap);
+      bitmap_layer_set_compositing_mode(s_flag_layer, GCompOpSet);
       layer_add_child(window_layer, bitmap_layer_get_layer(s_flag_layer));
     }
   }

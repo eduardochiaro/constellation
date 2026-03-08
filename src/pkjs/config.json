@@ -23,12 +23,6 @@
         "defaultValue": false
       },
       {
-        "type": "toggle",
-        "messageKey": "USE_24H_FORMAT",
-        "label": "Use 24-Hour Format",
-        "defaultValue": false
-      },
-      {
         "type": "select",
         "messageKey": "SPLASH_LOGO_STYLE",
         "label": "Splash Logo Style",
