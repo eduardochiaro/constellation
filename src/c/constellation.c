@@ -315,8 +315,8 @@ static void load_watchface_ui(void *data) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   
-  // Clean up splash logo
-  splash_logo_hide();
+  // Clean up splash logo (frees both layer and bitmap)
+  splash_logo_cleanup();
   
   // Create time text layer (central element)
   // Position depends on 24h format (centered when 24h, offset when 12h for AM/PM)
@@ -388,9 +388,7 @@ static void prv_window_unload(Window *window) {
   top_module_deinit();
   bottom_module_deinit();
   battery_module_deinit();
-  if (s_show_step_tracker) {
-    step_tracker_module_deinit();
-  }
+  step_tracker_module_deinit();
 }
 
 // ============================================================================
@@ -526,11 +524,11 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   if (s_canvas_layer) {
     save_settings();
     
-    // Handle step tracker enable/disable
-    if (!s_show_step_tracker) {
-      step_tracker_module_deinit();
-    } else {
+    // Handle step tracker enable/disable (always deinit first to prevent double-init leak)
+    step_tracker_module_deinit();
+    if (s_show_step_tracker) {
       step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
+      step_tracker_module_set_goal(s_step_goal);
     }
     
     // Force full redraw of all elements
@@ -558,10 +556,12 @@ static void prv_init(void) {
   splash_logo_init();
   moon_view_module_init();
   moon_view_module_set_line_style(s_tracker_use_line);
-  s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
-  s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
-  s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);
-  s_pm_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_INACTIVE_IMAGE);
+  if (!clock_is_24h_style()) {
+    s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
+    s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
+    s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);
+    s_pm_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_INACTIVE_IMAGE);
+  }
   
   // Create and set up main window
   s_window = window_create();
@@ -595,9 +595,7 @@ static void prv_deinit(void) {
   
   // Modules handle their own unsubscriptions
   battery_module_unsubscribe();
-  if (s_show_step_tracker) {
-    step_tracker_module_unsubscribe();
-  }
+  step_tracker_module_unsubscribe();
   
   // Deinit moon view module
   moon_view_module_deinit();

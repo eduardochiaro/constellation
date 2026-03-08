@@ -51,12 +51,12 @@ void splash_logo_hide(void) {
     bitmap_layer_destroy(s_splash_logo_layer);
     s_splash_logo_layer = NULL;
   }
-}
-
-void splash_logo_cleanup(void) {
-  splash_logo_hide();
   if (s_splash_bitmap) {
     gbitmap_destroy(s_splash_bitmap);
     s_splash_bitmap = NULL;
   }
+}
+
+void splash_logo_cleanup(void) {
+  splash_logo_hide();
 }
