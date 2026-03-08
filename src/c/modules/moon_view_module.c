@@ -4,11 +4,26 @@
 #include "step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN
 
 static Window *s_moon_window = NULL;
-static TextLayer *s_moon_text_layer = NULL;
+static TextLayer *s_sunrise_text_layer = NULL;
+static TextLayer *s_sunset_text_layer = NULL;
 static Layer *s_sun_canvas_layer = NULL;
 static bool s_use_line_style = false;
 static GBitmap *bitmap_moon_background = NULL;
 static GBitmap *bitmap_moon_phase = NULL;
+static BitmapLayer *s_bg_bitmap_layer = NULL;
+static BitmapLayer *s_phase_bitmap_layer = NULL;
+
+// Moon phase resource IDs indexed by moon_phase_icon (1-7)
+static const uint32_t s_moon_phase_resources[] = {
+  0, // index 0 unused
+  RESOURCE_ID_MOON_PHASE_1_IMAGE,
+  RESOURCE_ID_MOON_PHASE_2_IMAGE,
+  RESOURCE_ID_MOON_PHASE_3_IMAGE,
+  RESOURCE_ID_MOON_PHASE_4_IMAGE,
+  RESOURCE_ID_MOON_PHASE_5_IMAGE,
+  RESOURCE_ID_MOON_PHASE_6_IMAGE,
+  RESOURCE_ID_MOON_PHASE_7_IMAGE,
+};
 
 static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
@@ -36,17 +51,17 @@ static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   sun_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_use_line_style);
 }
 
-static void set_moon_layer_bitmap(Layer *window_layer, GBitmap *bitmap, GRect bounds) {
-
-   GRect bitmap_bounds = gbitmap_get_bounds(bitmap);
-    int x = (bounds.size.w - bitmap_bounds.size.w) / 2 + 1;
-    int y = (bounds.size.h - bitmap_bounds.size.h) / 2 + 7;
-    BitmapLayer *bitmap_layer = bitmap_layer_create(GRect(x, y, bitmap_bounds.size.w, bitmap_bounds.size.h));
-    if (bitmap_layer) {
-      bitmap_layer_set_bitmap(bitmap_layer, bitmap);
-      bitmap_layer_set_compositing_mode(bitmap_layer, GCompOpSet);
-      layer_add_child(window_layer, bitmap_layer_get_layer(bitmap_layer));
-    }
+static BitmapLayer *create_centered_bitmap_layer(Layer *parent, GBitmap *bitmap, GRect bounds) {
+  GRect bitmap_bounds = gbitmap_get_bounds(bitmap);
+  int x = (bounds.size.w - bitmap_bounds.size.w) / 2 + 1;
+  int y = (bounds.size.h - bitmap_bounds.size.h) / 2 + 7;
+  BitmapLayer *layer = bitmap_layer_create(GRect(x, y, bitmap_bounds.size.w, bitmap_bounds.size.h));
+  if (layer) {
+    bitmap_layer_set_bitmap(layer, bitmap);
+    bitmap_layer_set_compositing_mode(layer, GCompOpSet);
+    layer_add_child(parent, bitmap_layer_get_layer(layer));
+  }
+  return layer;
 }
 
 static void moon_view_timer_callback(void *data) {
@@ -67,96 +82,68 @@ static struct tm *from_string_to_tm(const char *time_str) {
   return &t;
 }
 
+static TextLayer *create_info_text_layer(Layer *parent, GRect frame, const char *text) {
+  TextLayer *layer = text_layer_create(frame);
+  text_layer_set_background_color(layer, GColorClear);
+  text_layer_set_text_color(layer, GColorWhite);
+  text_layer_set_font(layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
+  text_layer_set_text_alignment(layer, GTextAlignmentCenter);
+  text_layer_set_text(layer, text);
+  layer_add_child(parent, text_layer_get_layer(layer));
+  return layer;
+}
+
 static void moon_window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
-  // get weather data
   WeatherData *weather = weather_module_get_data();
-
-  bool show_moon_phase = true;
+  bool has_weather = weather && weather->is_valid;
 
   window_set_background_color(window, GColorBlack);
 
+  // Load moon bitmaps
   bitmap_moon_background = gbitmap_create_with_resource(RESOURCE_ID_MOON_BACKGROUND_IMAGE);
-  //get moon phase icon based on moon icon
-   if (weather->is_valid) {
-     // Map moon phase icon index to resource ID
-    APP_LOG(APP_LOG_LEVEL_INFO, "moon icon: %d", weather->moon_phase_icon);
-    switch (weather->moon_phase_icon)
-    {
-      case 1:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_1_IMAGE);
-        break;
-      case 2:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_2_IMAGE);
-        break;
-      case 3:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_3_IMAGE);
-        break;
-      case 4:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_4_IMAGE);
-        break;
-      case 5:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_5_IMAGE);
-        break;
-      case 6:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_6_IMAGE);
-        break;
-      case 7:
-        bitmap_moon_phase = gbitmap_create_with_resource(RESOURCE_ID_MOON_PHASE_7_IMAGE);
-        break;
-      default:
-        show_moon_phase = false;
-        break;
-     }
-   } else {
-    show_moon_phase = false;
-   }
 
-  // Create canvas layer for sun tracker bar
+  if (has_weather && weather->moon_phase_icon >= 1 && weather->moon_phase_icon <= 7) {
+    bitmap_moon_phase = gbitmap_create_with_resource(s_moon_phase_resources[weather->moon_phase_icon]);
+  }
+
+  // Sun tracker bar
   s_sun_canvas_layer = layer_create(bounds);
   if (s_sun_canvas_layer) {
     layer_set_update_proc(s_sun_canvas_layer, sun_canvas_update_proc);
     layer_add_child(window_layer, s_sun_canvas_layer);
   }
 
-  // Initialize sun tracker icons on this window
   sun_tracker_module_init(window, bounds);
   sun_tracker_module_update();
 
-  // Moon phase text
+  // Sunrise / sunset text
   static char sunrise_buf[40];
   static char sunset_buf[40];
-  if (weather->is_valid) {
+  if (has_weather) {
+    const char *fmt_24 = clock_is_24h_style() ? "%H:%M" : "%I:%M";
 
-    struct tm *t_sunrise= from_string_to_tm(weather->sunrise);
-    strftime(sunrise_buf, sizeof(sunrise_buf), clock_is_24h_style() ? "SUNRISE: %H:%M" : "SUNRISE: %I:%M", t_sunrise);
+    struct tm *t_sunrise = from_string_to_tm(weather->sunrise);
+    if (t_sunrise) {
+      snprintf(sunrise_buf, sizeof(sunrise_buf), "SUNRISE: ");
+      strftime(sunrise_buf + 9, sizeof(sunrise_buf) - 9, fmt_24, t_sunrise);
+    }
 
-    struct tm *t_sunset= from_string_to_tm(weather->sunset);
-    strftime(sunset_buf, sizeof(sunset_buf), clock_is_24h_style() ? "SUNSET: %H:%M" : "SUNSET: %I:%M", t_sunset);
-
-    //snprintf(moon_buf, sizeof(moon_buf), "%s\n%d%%", weather->moon_phase_name, weather->moon_phase);
+    struct tm *t_sunset = from_string_to_tm(weather->sunset);
+    if (t_sunset) {
+      snprintf(sunset_buf, sizeof(sunset_buf), "SUNSET: ");
+      strftime(sunset_buf + 8, sizeof(sunset_buf) - 8, fmt_24, t_sunset);
+    }
   }
 
-  s_moon_text_layer = text_layer_create(GRect(0, 5, bounds.size.w, 50));
-  text_layer_set_background_color(s_moon_text_layer, GColorClear);
-  text_layer_set_text_color(s_moon_text_layer, GColorWhite);
-  text_layer_set_font(s_moon_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
-  text_layer_set_text_alignment(s_moon_text_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_moon_text_layer, sunrise_buf);
-  layer_add_child(window_layer, text_layer_get_layer(s_moon_text_layer));
+  s_sunrise_text_layer = create_info_text_layer(window_layer, GRect(0, 5, bounds.size.w, 50), sunrise_buf);
+  s_sunset_text_layer = create_info_text_layer(window_layer, GRect(0, 20, bounds.size.w, 50), sunset_buf);
 
-  s_moon_text_layer = text_layer_create(GRect(0, 20, bounds.size.w, 50));
-  text_layer_set_background_color(s_moon_text_layer, GColorClear);
-  text_layer_set_text_color(s_moon_text_layer, GColorWhite);
-  text_layer_set_font(s_moon_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD));
-  text_layer_set_text_alignment(s_moon_text_layer, GTextAlignmentCenter);
-  text_layer_set_text(s_moon_text_layer, sunset_buf);
-  layer_add_child(window_layer, text_layer_get_layer(s_moon_text_layer));
-
-  set_moon_layer_bitmap(window_layer, bitmap_moon_background, bounds);
-  if (show_moon_phase) {
-    set_moon_layer_bitmap(window_layer, bitmap_moon_phase, bounds);
+  // Moon phase bitmaps
+  s_bg_bitmap_layer = create_centered_bitmap_layer(window_layer, bitmap_moon_background, bounds);
+  if (bitmap_moon_phase) {
+    s_phase_bitmap_layer = create_centered_bitmap_layer(window_layer, bitmap_moon_phase, bounds);
   }
 
   // Auto-dismiss after 5 seconds
@@ -166,13 +153,33 @@ static void moon_window_load(Window *window) {
 static void moon_window_unload(Window *window) {
   sun_tracker_module_deinit();
 
+  if (s_phase_bitmap_layer) {
+    bitmap_layer_destroy(s_phase_bitmap_layer);
+    s_phase_bitmap_layer = NULL;
+  }
+  if (s_bg_bitmap_layer) {
+    bitmap_layer_destroy(s_bg_bitmap_layer);
+    s_bg_bitmap_layer = NULL;
+  }
+  if (bitmap_moon_phase) {
+    gbitmap_destroy(bitmap_moon_phase);
+    bitmap_moon_phase = NULL;
+  }
+  if (bitmap_moon_background) {
+    gbitmap_destroy(bitmap_moon_background);
+    bitmap_moon_background = NULL;
+  }
   if (s_sun_canvas_layer) {
     layer_destroy(s_sun_canvas_layer);
     s_sun_canvas_layer = NULL;
   }
-  if (s_moon_text_layer) {
-    text_layer_destroy(s_moon_text_layer);
-    s_moon_text_layer = NULL;
+  if (s_sunrise_text_layer) {
+    text_layer_destroy(s_sunrise_text_layer);
+    s_sunrise_text_layer = NULL;
+  }
+  if (s_sunset_text_layer) {
+    text_layer_destroy(s_sunset_text_layer);
+    s_sunset_text_layer = NULL;
   }
 }
 
@@ -189,14 +196,6 @@ void moon_view_module_init(void) {
 void moon_view_module_deinit(void) {
   if (s_moon_window) {
     window_destroy(s_moon_window);
-    if (bitmap_moon_phase) {
-      gbitmap_destroy(bitmap_moon_phase);
-      bitmap_moon_phase = NULL;
-    }
-    if (bitmap_moon_background) {
-      gbitmap_destroy(bitmap_moon_background);
-      bitmap_moon_background = NULL;
-    }
     s_moon_window = NULL;
   }
 }
