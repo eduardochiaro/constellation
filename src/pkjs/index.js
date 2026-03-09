@@ -64,8 +64,8 @@ function fetchWeatherData(latitude, longitude) {
   var url = 'https://api.open-meteo.com/v1/forecast?' +
     'latitude=' + latitude +
     '&longitude=' + longitude +
-    '&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m' +
-    '&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min' +
+    '&current=temperature_2m,weather_code' +
+    '&daily=sunrise,sunset' +
     '&timezone=auto' +
     '&forecast_days=1';
   
@@ -86,11 +86,7 @@ function fetchWeatherData(latitude, longitude) {
         // Create weather data object
         var weatherData = {
           temperature: Math.round(response.current.temperature_2m),
-          humidity: response.current.relative_humidity_2m,
           weatherCode: response.current.weather_code,
-          windSpeed: Math.round(response.current.wind_speed_10m),
-          tempMax: Math.round(response.daily.temperature_2m_max[0]),
-          tempMin: Math.round(response.daily.temperature_2m_min[0]),
           sunrise: response.daily.sunrise[0],
           sunset: response.daily.sunset[0],
           moonPhase: Math.round(moonPhase * 100), // 0-100

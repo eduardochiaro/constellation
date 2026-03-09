@@ -26,37 +26,47 @@
         "type": "select",
         "messageKey": "SPLASH_LOGO_STYLE",
         "label": "Splash Logo Style",
-        "defaultValue": "bw",
+        "defaultValue": "1",
         "options": [
           {
             "label": "None",
-            "value": "none"
+            "value": "0"
           },
           {
             "label": "Constellation (Black & White)",
-            "value": "bw"
+            "value": "1"
           },
           {
             "label": "Constellation (Color)",
-            "value": "color"
+            "value": "2"
           },
           {
             "label": "House Varuun",
-            "value": "house_varuun"
+            "value": "3"
           },
           {
             "label": "Freestar Collective",
-            "value": "freestar"
+            "value": "4"
           },
           {
             "label": "SysDef",
-            "value": "sysdef"
+            "value": "5"
           },
           {
             "label": "Crimson Fleet",
-            "value": "crimson"
+            "value": "6"
+          },
+          {
+            "label": "Planet",
+            "value": "7"
           }
         ]
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_MOON_VIEW",
+        "label": "Show Moon View on wrist flick",
+        "defaultValue": true
       },
       {
         "type": "toggle",
@@ -66,6 +76,37 @@
         "capabilities": ["RECT"],
         "description": "Line style is better for rectangular displays."
        }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Weather"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_WEATHER",
+        "label": "Show Weather",
+        "defaultValue": true
+      },
+      {
+        "type": "select",
+        "messageKey": "WEATHER_SCALE",
+        "label": "Weather Scale",
+        "defaultValue": "1",
+        "options": [
+          {
+            "label": "Celsius",
+            "value": "1"
+          },
+          {
+            "label": "Fahrenheit",
+            "value": "2"
+          }
+        ]
+      }
     ]
   },
   {

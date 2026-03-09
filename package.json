@@ -38,7 +38,10 @@
       "BOTTOM_MODULE_FORMAT",
       "TRACKER_STYLE",
       "SHOW_STEP_TRACKER",
-      "WEATHER_DATA"
+      "WEATHER_DATA",
+      "SHOW_MOON_VIEW",
+      "SHOW_WEATHER",
+      "WEATHER_SCALE"
     ],
     "resources": {
       "media": [
@@ -151,6 +154,41 @@
           "type": "bitmap",
           "name": "MOON_PHASE_7_IMAGE",
           "file": "moon/moon_phase_7.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_EMPTY_IMAGE",
+          "file": "weather/empty.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_SUN_IMAGE",
+          "file": "weather/sun.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_CLOUDY_IMAGE",
+          "file": "weather/cloudy.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_RAINY_IMAGE",
+          "file": "weather/rain.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_SNOWY_IMAGE",
+          "file": "weather/snow.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_OVERCAST_IMAGE",
+          "file": "weather/overcast.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_FOG_IMAGE",
+          "file": "weather/fog.png"
         },
         {
           "type": "bitmap",

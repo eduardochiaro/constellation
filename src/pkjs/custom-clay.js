@@ -12,9 +12,21 @@ module.exports = function(minified) {
     }
   }
 
+  function toggleWeather() {
+    if (this.get()) {
+      clayConfig.getItemByMessageKey('WEATHER_SCALE').enable();
+    } else {
+      clayConfig.getItemByMessageKey('WEATHER_SCALE').disable();
+    }
+  }
+
   clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {
-    var coolStuffToggle = clayConfig.getItemByMessageKey('SHOW_STEP_TRACKER');
-    toggleStepTracker.call(coolStuffToggle);
-    coolStuffToggle.on('change', toggleStepTracker);
+    var stepTrackerToggle = clayConfig.getItemByMessageKey('SHOW_STEP_TRACKER');
+    toggleStepTracker.call(stepTrackerToggle);
+    stepTrackerToggle.on('change', toggleStepTracker);
+
+    var weatherToggle = clayConfig.getItemByMessageKey('SHOW_WEATHER');
+    toggleWeather.call(weatherToggle);
+    weatherToggle.on('change', toggleWeather);
   });
 };

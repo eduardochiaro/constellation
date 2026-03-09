@@ -1,20 +1,38 @@
 #include "weather_display_module.h"
 #include "weather_module.h"
 
+#define WEATHER_ICON_SIZE 15
+
 static TextLayer *s_weather_layer = NULL;
-static char s_weather_buffer[32];
+static BitmapLayer *s_icon_layer = NULL;
+static GBitmap *s_icon_bitmap = NULL;
+static char s_weather_buffer[12];
+static int s_center_y;
+static int s_center_x;
 
 void weather_display_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
 
-  // Position above the top module (top module is at bounds.size.h / 2 - 40)
-  s_weather_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 65, bounds.size.w, 24));
+  s_center_x = bounds.size.w / 2;
+  s_center_y = bounds.size.h / 2 - 65;
+
+  // Temperature text — right of center, leaves room for icon on the left
+  s_weather_layer = text_layer_create(GRect(0, s_center_y, s_center_x, 24));
   if (s_weather_layer) {
     text_layer_set_background_color(s_weather_layer, GColorClear);
     text_layer_set_text_color(s_weather_layer, GColorWhite);
     text_layer_set_font(s_weather_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
-    text_layer_set_text_alignment(s_weather_layer, GTextAlignmentCenter);
+    text_layer_set_text_alignment(s_weather_layer, GTextAlignmentRight);
     layer_add_child(window_layer, text_layer_get_layer(s_weather_layer));
+  }
+
+  // Weather icon — left of center
+  s_icon_layer = bitmap_layer_create(GRect(s_center_x + (WEATHER_ICON_SIZE /2) , s_center_y + 6, WEATHER_ICON_SIZE, WEATHER_ICON_SIZE));
+  if (s_icon_layer) {
+    bitmap_layer_set_compositing_mode(s_icon_layer, GCompOpSet);
+    bitmap_layer_set_background_color(s_icon_layer, GColorClear);
+    layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), true);
+    layer_add_child(window_layer, bitmap_layer_get_layer(s_icon_layer));
   }
 }
 
@@ -22,19 +40,50 @@ void weather_display_module_update(void) {
   if (!s_weather_layer) return;
 
   WeatherData *weather = weather_module_get_data();
-  if (!weather->is_valid) {
+  if (!weather || !weather->is_valid) {
     text_layer_set_text(s_weather_layer, "");
+    if (s_icon_layer) layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), true);
     return;
   }
 
-  const char *desc = weather_module_get_description(weather->weather_code);
-  snprintf(s_weather_buffer, sizeof(s_weather_buffer), "%d° %s", weather->temperature, desc);
+  // Update temperature text
+  int16_t temp = weather_module_get_temperature();
+  snprintf(s_weather_buffer, sizeof(s_weather_buffer), "%d°", temp);
   text_layer_set_text(s_weather_layer, s_weather_buffer);
+
+  // Update icon
+  uint32_t res_id = weather_module_get_icon_resource(weather->weather_code);
+  if (s_icon_bitmap) {
+    gbitmap_destroy(s_icon_bitmap);
+    s_icon_bitmap = NULL;
+  }
+  s_icon_bitmap = gbitmap_create_with_resource(res_id);
+  if (s_icon_bitmap && s_icon_layer) {
+    bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
+    layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), false);
+  }
+}
+
+void weather_display_module_set_visible(bool visible) {
+  if (s_weather_layer) {
+    layer_set_hidden(text_layer_get_layer(s_weather_layer), !visible);
+  }
+  if (s_icon_layer) {
+    layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), !visible);
+  }
 }
 
 void weather_display_module_deinit(void) {
   if (s_weather_layer) {
     text_layer_destroy(s_weather_layer);
     s_weather_layer = NULL;
+  }
+  if (s_icon_layer) {
+    bitmap_layer_destroy(s_icon_layer);
+    s_icon_layer = NULL;
+  }
+  if (s_icon_bitmap) {
+    gbitmap_destroy(s_icon_bitmap);
+    s_icon_bitmap = NULL;
   }
 }

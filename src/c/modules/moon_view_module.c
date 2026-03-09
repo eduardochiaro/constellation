@@ -137,8 +137,8 @@ static void moon_window_load(Window *window) {
     }
   }
 
-  s_sunrise_text_layer = create_info_text_layer(window_layer, GRect(0, 5, bounds.size.w, 50), sunrise_buf);
-  s_sunset_text_layer = create_info_text_layer(window_layer, GRect(0, 20, bounds.size.w, 50), sunset_buf);
+  s_sunrise_text_layer = create_info_text_layer(window_layer, GRect(0, PBL_IF_ROUND_ELSE(10,5), bounds.size.w, 50), sunrise_buf);
+  s_sunset_text_layer = create_info_text_layer(window_layer, GRect(0, PBL_IF_ROUND_ELSE(25,20), bounds.size.w, 50), sunset_buf);
 
   // Moon phase bitmaps
   s_bg_bitmap_layer = create_centered_bitmap_layer(window_layer, bitmap_moon_background, bounds);

@@ -1,5 +1,16 @@
 #include "splash_logo_module.h"
 
+#define SPLASH_LOGO_COUNT 7
+
+static const uint32_t s_logo_resources[SPLASH_LOGO_COUNT] = {
+  RESOURCE_ID_CONSTELLATION_BW_LOGO_IMAGE,    // 1
+  RESOURCE_ID_CONSTELLATION_COLOR_LOGO_IMAGE, // 2
+  RESOURCE_ID_HOUSEVARUUN_LOGO_IMAGE,         // 3
+  RESOURCE_ID_FREESTAR_LOGO_IMAGE,            // 4
+  RESOURCE_ID_SYSDEF_LOGO_IMAGE,              // 5
+  RESOURCE_ID_CRIMSON_LOGO_IMAGE,             // 6
+  RESOURCE_ID_MOON_BACKGROUND_IMAGE,          // 7
+};
 
 static BitmapLayer *s_splash_logo_layer;
 static GBitmap *s_splash_bitmap;
@@ -9,29 +20,13 @@ void splash_logo_init(void) {
   s_splash_logo_layer = NULL;
 }
 
-void splash_logo_show(Window *window, char *s_style_logo) {
+void splash_logo_show(Window *window, int style) {
+  if (style < 1 || style > SPLASH_LOGO_COUNT) return;
+
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
 
-  // Load only the selected logo bitmap
-  uint32_t resource_id = 0;
-  if (strcmp(s_style_logo, "color") == 0) {
-    resource_id = RESOURCE_ID_CONSTELLATION_COLOR_LOGO_IMAGE;
-  } else if (strcmp(s_style_logo, "bw") == 0) {
-    resource_id = RESOURCE_ID_CONSTELLATION_BW_LOGO_IMAGE;
-  } else if (strcmp(s_style_logo, "house_varuun") == 0) {
-    resource_id = RESOURCE_ID_HOUSEVARUUN_LOGO_IMAGE;
-  } else if (strcmp(s_style_logo, "freestar") == 0) {
-    resource_id = RESOURCE_ID_FREESTAR_LOGO_IMAGE;
-  } else if (strcmp(s_style_logo, "sysdef") == 0) {
-    resource_id = RESOURCE_ID_SYSDEF_LOGO_IMAGE;
-  } else if (strcmp(s_style_logo, "crimson") == 0) {
-    resource_id = RESOURCE_ID_CRIMSON_LOGO_IMAGE;
-  }
-
-  if (resource_id == 0) return;
-
-  s_splash_bitmap = gbitmap_create_with_resource(resource_id);
+  s_splash_bitmap = gbitmap_create_with_resource(s_logo_resources[style - 1]);
   if (!s_splash_bitmap) return;
 
   GRect logo_bounds = gbitmap_get_bounds(s_splash_bitmap);
@@ -46,7 +41,7 @@ void splash_logo_show(Window *window, char *s_style_logo) {
   }
 }
 
-void splash_logo_hide(void) {
+static void splash_logo_hide(void) {
   if (s_splash_logo_layer) {
     bitmap_layer_destroy(s_splash_logo_layer);
     s_splash_logo_layer = NULL;
