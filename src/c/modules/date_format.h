@@ -15,3 +15,5 @@ typedef enum {
 
 // Format a date string according to the specified format type
 void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, DateFormatType format, int step_count);
+
+struct tm *from_string_to_tm(const char *time_str);

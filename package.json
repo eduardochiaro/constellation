@@ -192,6 +192,16 @@
         },
         {
           "type": "bitmap",
+          "name": "WEATHER_THUNDERSTORM_IMAGE",
+          "file": "weather/thunderstorm.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_MOON_IMAGE",
+          "file": "weather/moon.png"
+        },
+        {
+          "type": "bitmap",
           "name": "MENU_ICON",
           "file": "menu_icon.png",
           "menuIcon": true

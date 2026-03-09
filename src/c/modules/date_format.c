@@ -75,3 +75,17 @@ void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, 
       break;
   }
 }
+
+struct tm *from_string_to_tm(const char *time_str) {
+  // Parse "2026-03-08T06:30" manually (no sscanf to avoid pulling in libc)
+  static struct tm t;
+  memset(&t, 0, sizeof(struct tm));
+  if (!time_str || strlen(time_str) < 16) return NULL;
+
+  t.tm_year = atoi(time_str) - 1900;       // "2026" -> 126
+  t.tm_mon  = atoi(time_str + 5) - 1;      // "03"   -> 2
+  t.tm_mday = atoi(time_str + 8);           // "08"
+  t.tm_hour = atoi(time_str + 11);          // "06"
+  t.tm_min  = atoi(time_str + 14);          // "30"
+  return &t;
+}
