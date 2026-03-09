@@ -51,8 +51,11 @@ static bool s_show_step_tracker = true;
 static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
 static DateFormatType s_bottom_module_format = DATE_FORMAT_MONTH_DAY;
 static int s_step_goal = 8000;
-static char s_style_logo[16] = "bw";
+static int s_style_logo = 1;
 static bool s_tracker_use_line = false;
+static bool s_show_moon_view = true;
+static bool s_show_weather = true;
+static int s_weather_scale = 1;
 
 // ============================================================================
 // FORWARD DECLARATIONS
@@ -285,7 +288,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 }
 
 static void accel_tap_handler(AccelAxisType axis, int32_t direction) {
-  moon_view_module_show();
+  if (s_show_moon_view) {
+    moon_view_module_show();
+  }
 }
 
 // ============================================================================
@@ -297,7 +302,7 @@ static void prv_window_load(Window *window) {
   window_set_background_color(window, GColorBlack);
 
   // Show splash screen if enabled
-  if (strcmp(s_style_logo, "none") != 0) {
+  if (s_style_logo > 0) {
     splash_logo_show(window, s_style_logo);
     
     // Schedule watchface UI load after splash
@@ -348,7 +353,9 @@ static void load_watchface_ui(void *data) {
   }
   
   // Initialize modules
+  weather_module_set_scale(s_weather_scale);
   weather_display_module_init(window, bounds);
+  weather_display_module_set_visible(s_show_weather);
   top_module_init(window, bounds);
   bottom_module_init(window, bounds);
   battery_module_init(window, bounds);
@@ -401,9 +408,12 @@ static void save_settings(void) {
   persist_write_int(MESSAGE_KEY_TOP_MODULE_FORMAT, s_top_module_format);
   persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
-  persist_write_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo);
+  persist_write_int(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo);
   persist_write_bool(MESSAGE_KEY_TRACKER_STYLE, s_tracker_use_line);
   persist_write_bool(MESSAGE_KEY_SHOW_STEP_TRACKER, s_show_step_tracker);
+  persist_write_bool(MESSAGE_KEY_SHOW_MOON_VIEW, s_show_moon_view);
+  persist_write_bool(MESSAGE_KEY_SHOW_WEATHER, s_show_weather);
+  persist_write_int(MESSAGE_KEY_WEATHER_SCALE, s_weather_scale);
 }
 
 static void load_settings(void) {
@@ -424,7 +434,7 @@ static void load_settings(void) {
     if (s_step_goal < 1000) s_step_goal = 8000;  // Validate stored value
   }
   if (persist_exists(MESSAGE_KEY_SPLASH_LOGO_STYLE)) {
-    persist_read_string(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo, sizeof(s_style_logo));
+    s_style_logo = persist_read_int(MESSAGE_KEY_SPLASH_LOGO_STYLE);
   }
   if (persist_exists(MESSAGE_KEY_TRACKER_STYLE)) {
     s_tracker_use_line = persist_read_bool(MESSAGE_KEY_TRACKER_STYLE);
@@ -432,6 +442,15 @@ static void load_settings(void) {
   
   if (persist_exists(MESSAGE_KEY_SHOW_STEP_TRACKER)) {
     s_show_step_tracker = persist_read_bool(MESSAGE_KEY_SHOW_STEP_TRACKER);
+  }
+  if (persist_exists(MESSAGE_KEY_SHOW_MOON_VIEW)) {
+    s_show_moon_view = persist_read_bool(MESSAGE_KEY_SHOW_MOON_VIEW);
+  }
+  if (persist_exists(MESSAGE_KEY_SHOW_WEATHER)) {
+    s_show_weather = persist_read_bool(MESSAGE_KEY_SHOW_WEATHER);
+  }
+  if (persist_exists(MESSAGE_KEY_WEATHER_SCALE)) {
+    s_weather_scale = persist_read_int(MESSAGE_KEY_WEATHER_SCALE);
   }
 }
 
@@ -441,7 +460,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   // Handle weather data
   Tuple *weather_tuple = dict_find(iter, MESSAGE_KEY_WEATHER_DATA);
   if (weather_tuple && weather_tuple->type == TUPLE_CSTRING) {
-    APP_LOG(APP_LOG_LEVEL_INFO, "Received weather data");
     weather_module_update(weather_tuple->value->cstring);
     weather_display_module_update();
     // Trigger UI update if needed
@@ -485,8 +503,7 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   // Handle splash logo style setting
   Tuple *logo_style_tuple = dict_find(iter, MESSAGE_KEY_SPLASH_LOGO_STYLE);
   if (logo_style_tuple) {
-    strncpy(s_style_logo, logo_style_tuple->value->cstring, sizeof(s_style_logo) - 1);
-    s_style_logo[sizeof(s_style_logo) - 1] = '\0';
+    s_style_logo = atoi(logo_style_tuple->value->cstring);
   }
   
   // Handle top module format setting
@@ -518,6 +535,27 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     if (s_canvas_layer) {
       layer_mark_dirty(s_canvas_layer);
     }
+  }
+  
+  // Handle show moon view setting
+  Tuple *show_moon_tuple = dict_find(iter, MESSAGE_KEY_SHOW_MOON_VIEW);
+  if (show_moon_tuple) {
+    s_show_moon_view = (show_moon_tuple->value->int32 == 1);
+  }
+  
+  // Handle show weather setting
+  Tuple *show_weather_tuple = dict_find(iter, MESSAGE_KEY_SHOW_WEATHER);
+  if (show_weather_tuple) {
+    s_show_weather = (show_weather_tuple->value->int32 == 1);
+    weather_display_module_set_visible(s_show_weather);
+  }
+  
+  // Handle weather scale setting
+  Tuple *weather_scale_tuple = dict_find(iter, MESSAGE_KEY_WEATHER_SCALE);
+  if (weather_scale_tuple) {
+    s_weather_scale = atoi(weather_scale_tuple->value->cstring);
+    weather_module_set_scale(s_weather_scale);
+    weather_display_module_update();
   }
 
   // Only apply settings and redraw if the watchface UI has loaded
@@ -599,9 +637,6 @@ static void prv_deinit(void) {
   
   // Deinit moon view module
   moon_view_module_deinit();
-  
-  // Deinit weather module
-  weather_module_deinit();
   
   // Destroy window
   if (s_window) {
