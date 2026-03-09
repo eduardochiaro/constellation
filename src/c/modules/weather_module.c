@@ -134,10 +134,12 @@ int16_t weather_module_get_temperature(void) {
   return temp_c;
 }
 
-uint32_t weather_module_get_icon_resource(uint16_t code) {
+uint32_t weather_module_get_icon_resource(uint16_t code, bool is_night) {
+  // if night and code is sun, use moon icon instead
+  
   switch (code) {
     case 0:
-    case 1:  return RESOURCE_ID_WEATHER_SUN_IMAGE;
+    case 1:  return is_night ? RESOURCE_ID_WEATHER_MOON_IMAGE : RESOURCE_ID_WEATHER_SUN_IMAGE;
     case 2:  return RESOURCE_ID_WEATHER_CLOUDY_IMAGE;
     case 3:  return RESOURCE_ID_WEATHER_OVERCAST_IMAGE;
     case 45:
@@ -150,16 +152,18 @@ uint32_t weather_module_get_icon_resource(uint16_t code) {
     case 65:
     case 80:
     case 81:
-    case 82:
-    case 95:
-    case 96:
-    case 99: return RESOURCE_ID_WEATHER_RAINY_IMAGE;
+    case 82: return RESOURCE_ID_WEATHER_RAINY_IMAGE;
+
     case 71:
     case 73:
     case 75:
     case 77:
     case 85:
     case 86: return RESOURCE_ID_WEATHER_SNOWY_IMAGE;
+
+    case 95:
+    case 96:
+    case 99: return RESOURCE_ID_WEATHER_THUNDERSTORM_IMAGE;
     default: return RESOURCE_ID_WEATHER_EMPTY_IMAGE;
   }
 }

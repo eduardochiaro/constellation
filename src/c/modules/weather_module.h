@@ -24,7 +24,7 @@ void weather_module_update(const char *json_data);
 WeatherData* weather_module_get_data(void);
 
 // Get weather icon resource ID from WMO code
-uint32_t weather_module_get_icon_resource(uint16_t code);
+uint32_t weather_module_get_icon_resource(uint16_t code, bool is_night);
 
 // Set temperature scale (1=Celsius, 2=Fahrenheit)
 void weather_module_set_scale(int scale);

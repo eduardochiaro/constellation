@@ -2,6 +2,7 @@
 #include "sun_tracker_module.h"
 #include "weather_module.h"
 #include "step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN
+#include "date_format.h"
 
 static Window *s_moon_window = NULL;
 static TextLayer *s_sunrise_text_layer = NULL;
@@ -66,20 +67,6 @@ static BitmapLayer *create_centered_bitmap_layer(Layer *parent, GBitmap *bitmap,
 
 static void moon_view_timer_callback(void *data) {
   moon_view_module_hide();
-}
-
-static struct tm *from_string_to_tm(const char *time_str) {
-  // Parse "2026-03-08T06:30" manually (no sscanf to avoid pulling in libc)
-  static struct tm t;
-  memset(&t, 0, sizeof(struct tm));
-  if (!time_str || strlen(time_str) < 16) return NULL;
-
-  t.tm_year = atoi(time_str) - 1900;       // "2026" -> 126
-  t.tm_mon  = atoi(time_str + 5) - 1;      // "03"   -> 2
-  t.tm_mday = atoi(time_str + 8);           // "08"
-  t.tm_hour = atoi(time_str + 11);          // "06"
-  t.tm_min  = atoi(time_str + 14);          // "30"
-  return &t;
 }
 
 static TextLayer *create_info_text_layer(Layer *parent, GRect frame, const char *text) {

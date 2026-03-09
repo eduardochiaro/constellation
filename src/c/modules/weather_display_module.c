@@ -1,5 +1,6 @@
 #include "weather_display_module.h"
 #include "weather_module.h"
+#include "date_format.h"
 
 #define WEATHER_ICON_SIZE 15
 
@@ -51,8 +52,22 @@ void weather_display_module_update(void) {
   snprintf(s_weather_buffer, sizeof(s_weather_buffer), "%d°", temp);
   text_layer_set_text(s_weather_layer, s_weather_buffer);
 
+  bool is_night = false;
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
+  if (t) {
+    int now_min = t->tm_hour * 60 + t->tm_min;
+    struct tm *t_sunrise = from_string_to_tm(weather->sunrise);
+    struct tm *t_sunset = from_string_to_tm(weather->sunset);
+    if (t_sunrise && t_sunset) {
+      int sunrise_min = t_sunrise->tm_hour * 60 + t_sunrise->tm_min;
+      int sunset_min = t_sunset->tm_hour * 60 + t_sunset->tm_min;
+      is_night = (now_min < sunrise_min) || (now_min >= sunset_min);
+    }
+  }
+
   // Update icon
-  uint32_t res_id = weather_module_get_icon_resource(weather->weather_code);
+  uint32_t res_id = weather_module_get_icon_resource(weather->weather_code, is_night);
   if (s_icon_bitmap) {
     gbitmap_destroy(s_icon_bitmap);
     s_icon_bitmap = NULL;
