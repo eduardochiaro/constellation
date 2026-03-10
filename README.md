@@ -13,7 +13,7 @@ A Pebble watchface inspired by Starfield.
 ![Aplite 2](assets/aplite_2.png)
 
 ### Pebble Time/Time Steel
-![Basalt 0](assets/basalt_0.png)
+![Basalt 0](assets/basalt_0.gif)
 ![Basalt 1](assets/basalt_1.png)
 ![Basalt 2](assets/basalt_2.png)
 ![Basalt 3](assets/basalt_3.png)
