@@ -10,6 +10,7 @@ static GBitmap *s_icon_bitmap = NULL;
 static char s_weather_buffer[12];
 static int s_center_y;
 static int s_center_x;
+static bool s_visible = true;
 
 void weather_display_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
@@ -39,6 +40,8 @@ void weather_display_module_init(Window *window, GRect bounds) {
 
 void weather_display_module_update(void) {
   if (!s_weather_layer) return;
+
+  if (!s_visible) return;
 
   WeatherData *weather = weather_module_get_data();
   if (!weather || !weather->is_valid) {
@@ -80,6 +83,7 @@ void weather_display_module_update(void) {
 }
 
 void weather_display_module_set_visible(bool visible) {
+  s_visible = visible;
   if (s_weather_layer) {
     layer_set_hidden(text_layer_get_layer(s_weather_layer), !visible);
   }

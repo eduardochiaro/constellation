@@ -140,7 +140,7 @@ uint32_t weather_module_get_icon_resource(uint16_t code, bool is_night) {
   switch (code) {
     case 0:
     case 1:  return is_night ? RESOURCE_ID_WEATHER_MOON_IMAGE : RESOURCE_ID_WEATHER_SUN_IMAGE;
-    case 2:  return RESOURCE_ID_WEATHER_CLOUDY_IMAGE;
+    case 2:  return is_night ? RESOURCE_ID_WEATHER_CLOUDY_MOON_IMAGE : RESOURCE_ID_WEATHER_CLOUDY_IMAGE;
     case 3:  return RESOURCE_ID_WEATHER_OVERCAST_IMAGE;
     case 45:
     case 48: return RESOURCE_ID_WEATHER_FOG_IMAGE;
