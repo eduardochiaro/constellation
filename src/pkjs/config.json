@@ -23,6 +23,35 @@
         "defaultValue": false
       },
       {
+        "type": "toggle",
+        "messageKey": "SHOW_MOON_VIEW",
+        "label": "Show Moon View on wrist flick",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "TRACKER_STYLE",
+        "label": "Use Line Style for trackers",
+        "defaultValue": false,
+        "capabilities": ["RECT"],
+        "description": "Line style is better for rectangular displays."
+       }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Splash Screen"
+      },
+      {
+        "type": "text",
+        "messageKey": "SPLASH_LOGO",
+        "label": "Splash Logo Preview",
+        "defaultValue": ""
+      },
+      {
         "type": "select",
         "messageKey": "SPLASH_LOGO_STYLE",
         "label": "Splash Logo Style",
@@ -61,21 +90,7 @@
             "value": "7"
           }
         ]
-      },
-      {
-        "type": "toggle",
-        "messageKey": "SHOW_MOON_VIEW",
-        "label": "Show Moon View on wrist flick",
-        "defaultValue": true
-      },
-      {
-        "type": "toggle",
-        "messageKey": "TRACKER_STYLE",
-        "label": "Use Line Style for trackers",
-        "defaultValue": false,
-        "capabilities": ["RECT"],
-        "description": "Line style is better for rectangular displays."
-       }
+      }
     ]
   },
   {
