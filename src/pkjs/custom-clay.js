@@ -20,6 +20,23 @@ module.exports = function(minified) {
     }
   }
 
+  function setLogoDisplay() {
+    var splashLogoStyle = clayConfig.getItemByMessageKey('SPLASH_LOGO_STYLE');
+    const image = () => {
+      switch (splashLogoStyle.get()) {
+        case '1': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/constellation_bw_logo.png';
+        case '2': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/constellation_color_logo.png';
+        case '3': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/house_varuun_logo.png';
+        case '4': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/freestar_logo.png';
+        case '5': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/sysdef_logo.png';
+        case '6': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/crimson_logo.png';
+        case '7': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/moon/moon_background.png';
+        default: return null;
+      }
+    }
+    clayConfig.getItemByMessageKey('SPLASH_LOGO').set("<img src='" + image() + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
+  }
+
   clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {
     var stepTrackerToggle = clayConfig.getItemByMessageKey('SHOW_STEP_TRACKER');
     toggleStepTracker.call(stepTrackerToggle);
@@ -28,5 +45,11 @@ module.exports = function(minified) {
     var weatherToggle = clayConfig.getItemByMessageKey('SHOW_WEATHER');
     toggleWeather.call(weatherToggle);
     weatherToggle.on('change', toggleWeather);
+
+
+
+    var splashLogoStyle = clayConfig.getItemByMessageKey('SPLASH_LOGO_STYLE');
+    setLogoDisplay.call(splashLogoStyle);
+    splashLogoStyle.on('change', setLogoDisplay);
   });
 };
