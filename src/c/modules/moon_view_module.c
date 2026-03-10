@@ -108,19 +108,20 @@ static void moon_window_load(Window *window) {
   // Sunrise / sunset text
   static char sunrise_buf[40];
   static char sunset_buf[40];
+  snprintf(sunrise_buf, sizeof(sunrise_buf), "SUNRISE: --:--");
+  snprintf(sunset_buf, sizeof(sunset_buf), "SUNSET: --:--");
   if (has_weather) {
     const char *fmt_24 = clock_is_24h_style() ? "%H:%M" : "%I:%M";
 
-    struct tm *t_sunrise = from_string_to_tm(weather->sunrise);
-    if (t_sunrise) {
+    struct tm t_sunrise, t_sunset;
+    if (from_string_to_tm(weather->sunrise, &t_sunrise)) {
       snprintf(sunrise_buf, sizeof(sunrise_buf), "SUNRISE: ");
-      strftime(sunrise_buf + 9, sizeof(sunrise_buf) - 9, fmt_24, t_sunrise);
+      strftime(sunrise_buf + 9, sizeof(sunrise_buf) - 9, fmt_24, &t_sunrise);
     }
 
-    struct tm *t_sunset = from_string_to_tm(weather->sunset);
-    if (t_sunset) {
+    if (from_string_to_tm(weather->sunset, &t_sunset)) {
       snprintf(sunset_buf, sizeof(sunset_buf), "SUNSET: ");
-      strftime(sunset_buf + 8, sizeof(sunset_buf) - 8, fmt_24, t_sunset);
+      strftime(sunset_buf + 8, sizeof(sunset_buf) - 8, fmt_24, &t_sunset);
     }
   }
 

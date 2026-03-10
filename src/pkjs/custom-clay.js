@@ -34,7 +34,12 @@ module.exports = function(minified) {
         default: return null;
       }
     }
-    clayConfig.getItemByMessageKey('SPLASH_LOGO').set("<img src='" + image() + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
+    const currentImage = image();
+    if (currentImage) {
+      clayConfig.getItemByMessageKey('SPLASH_LOGO').set("<img src='" + currentImage + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
+    } else {
+      clayConfig.getItemByMessageKey('SPLASH_LOGO').set('Splash Logo will not be displayed');
+    }
   }
 
   clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {

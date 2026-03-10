@@ -11,6 +11,8 @@ static char s_weather_buffer[12];
 static int s_center_y;
 static int s_center_x;
 static bool s_visible = true;
+static uint32_t s_last_res_id = 0;
+static int16_t s_last_temp = INT16_MIN;
 
 void weather_display_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
@@ -47,38 +49,46 @@ void weather_display_module_update(void) {
   if (!weather || !weather->is_valid) {
     text_layer_set_text(s_weather_layer, "");
     if (s_icon_layer) layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), true);
+    s_last_res_id = 0;
+    s_last_temp = INT16_MIN;
     return;
   }
 
   // Update temperature text
   int16_t temp = weather_module_get_temperature();
-  snprintf(s_weather_buffer, sizeof(s_weather_buffer), "%d°", temp);
-  text_layer_set_text(s_weather_layer, s_weather_buffer);
+  if (temp != s_last_temp) {
+    s_last_temp = temp;
+    snprintf(s_weather_buffer, sizeof(s_weather_buffer), "%d°", temp);
+    text_layer_set_text(s_weather_layer, s_weather_buffer);
+  }
 
   bool is_night = false;
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
   if (t) {
     int now_min = t->tm_hour * 60 + t->tm_min;
-    struct tm *t_sunrise = from_string_to_tm(weather->sunrise);
-    struct tm *t_sunset = from_string_to_tm(weather->sunset);
-    if (t_sunrise && t_sunset) {
-      int sunrise_min = t_sunrise->tm_hour * 60 + t_sunrise->tm_min;
-      int sunset_min = t_sunset->tm_hour * 60 + t_sunset->tm_min;
+    struct tm t_sunrise, t_sunset;
+    if (from_string_to_tm(weather->sunrise, &t_sunrise) &&
+        from_string_to_tm(weather->sunset, &t_sunset)) {
+      int sunrise_min = t_sunrise.tm_hour * 60 + t_sunrise.tm_min;
+      int sunset_min = t_sunset.tm_hour * 60 + t_sunset.tm_min;
       is_night = (now_min < sunrise_min) || (now_min >= sunset_min);
     }
   }
 
-  // Update icon
+  // Update icon only if resource changed
   uint32_t res_id = weather_module_get_icon_resource(weather->weather_code, is_night);
-  if (s_icon_bitmap) {
-    gbitmap_destroy(s_icon_bitmap);
-    s_icon_bitmap = NULL;
-  }
-  s_icon_bitmap = gbitmap_create_with_resource(res_id);
-  if (s_icon_bitmap && s_icon_layer) {
-    bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
-    layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), false);
+  if (res_id != s_last_res_id) {
+    s_last_res_id = res_id;
+    if (s_icon_bitmap) {
+      gbitmap_destroy(s_icon_bitmap);
+      s_icon_bitmap = NULL;
+    }
+    s_icon_bitmap = gbitmap_create_with_resource(res_id);
+    if (s_icon_bitmap && s_icon_layer) {
+      bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
+      layer_set_hidden(bitmap_layer_get_layer(s_icon_layer), false);
+    }
   }
 }
 

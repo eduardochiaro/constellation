@@ -43,6 +43,7 @@ static GBitmap *s_pm_inactive_bitmap;
 
 static bool s_is_pm;
 static int s_current_second;
+static int s_last_weather_minute = -1;
 
 // User settings (persisted)
 static bool s_show_second_ticker = true;
@@ -255,8 +256,11 @@ static void update_time() {
   // Get current step count (only if step tracker is enabled)
   int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
   
-  // Update modules
-  weather_display_module_update();
+  // Update weather display only on minute change (day/night calc is expensive per-second)
+  if (tick_time->tm_min != s_last_weather_minute) {
+    s_last_weather_minute = tick_time->tm_min;
+    weather_display_module_update();
+  }
   top_module_update(tick_time, s_top_module_format, step_count);
   bottom_module_update(tick_time, s_bottom_module_format, step_count);
   

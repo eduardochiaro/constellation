@@ -123,6 +123,18 @@ function fetchWeatherData(latitude, longitude) {
 
 // Get location and fetch weather
 function updateWeather() {
+  // Skip weather fetch if both weather display and moon view are disabled
+  try {
+    var settings = JSON.parse(localStorage.getItem('clay-settings')) || {};
+    var showWeather = settings.SHOW_WEATHER;
+    var showMoonView = settings.SHOW_MOON_VIEW;
+    // Clay stores toggles as true/false; treat missing as default (true)
+    if (showWeather === false && showMoonView === false) {
+      console.log('Weather and moon view both disabled, skipping fetch');
+      return;
+    }
+  } catch (e) {}
+
   console.log('Getting location for weather update...');
   
   navigator.geolocation.getCurrentPosition(

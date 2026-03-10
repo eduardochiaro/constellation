@@ -109,11 +109,6 @@ void weather_module_update(const char *json_data) {
     s_weather_data.moon_phase_icon = (int16_t)temp_val;
   }
   
-  // Parse timestamp
-  if (get_json_int(json_data, "timestamp", &temp_val)) {
-    s_weather_data.timestamp = (time_t)(temp_val / 1000); // Convert from ms to seconds
-  }
-  
   s_weather_data.is_valid = true;
 }
 
