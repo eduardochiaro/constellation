@@ -10,7 +10,7 @@
   ],
   "private": true,
   "dependencies": {
-    "@rebble/clay": "^1.0.6"
+    "@rebble/clay": "^1.0.8"
   },
   "pebble": {
     "displayName": "Constellation",
@@ -169,6 +169,11 @@
           "type": "bitmap",
           "name": "WEATHER_CLOUDY_IMAGE",
           "file": "weather/cloudy.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_CLOUDY_MOON_IMAGE",
+          "file": "weather/cloudy_moon.png"
         },
         {
           "type": "bitmap",

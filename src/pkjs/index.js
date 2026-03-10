@@ -33,18 +33,18 @@ function calculateMoonPhase(date) {
   return phase;
 }
 
-// Get moon phase name and emoji representation
+// Get moon phase name and code representation
 function getMoonPhaseInfo(phase) {
   var phaseNames = [
-    { name: 'New Moon', emoji: '🌑', icon: 0, min: 0, max: 0.033 },
-    { name: 'Waxing Crescent', emoji: '🌒', icon: 1, min: 0.033, max: 0.216 },
-    { name: 'First Quarter', emoji: '🌓', icon: 2, min: 0.216, max: 0.283 },
-    { name: 'Waxing Gibbous', emoji: '🌔', icon: 3, min: 0.283, max: 0.466 },
-    { name: 'Full Moon', emoji: '🌕', icon: 4, min: 0.466, max: 0.533 },
-    { name: 'Waning Gibbous', emoji: '🌖', icon: 5, min: 0.533, max: 0.716 },
-    { name: 'Last Quarter', emoji: '🌗', icon: 6, min: 0.716, max: 0.783 },
-    { name: 'Waning Crescent', emoji: '🌘', icon: 7, min: 0.783, max: 0.967 },
-    { name: 'New Moon', emoji: '🌑', icon: 0, min: 0.967, max: 1.0 }
+    { name: 'New Moon', icon: 0, min: 0, max: 0.033 },
+    { name: 'Waxing Crescent',icon: 1, min: 0.033, max: 0.216 },
+    { name: 'First Quarter', icon: 2, min: 0.216, max: 0.283 },
+    { name: 'Waxing Gibbous', icon: 3, min: 0.283, max: 0.466 },
+    { name: 'Full Moon', icon: 4, min: 0.466, max: 0.533 },
+    { name: 'Waning Gibbous', icon: 5, min: 0.533, max: 0.716 },
+    { name: 'Last Quarter', icon: 6, min: 0.716, max: 0.783 },
+    { name: 'Waning Crescent', icon: 7, min: 0.783, max: 0.967 },
+    { name: 'New Moon', icon: 0, min: 0.967, max: 1.0 }
   ];
   
   for (var i = 0; i < phaseNames.length; i++) {
