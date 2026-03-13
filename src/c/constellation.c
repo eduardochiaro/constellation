@@ -1,11 +1,11 @@
 #include <pebble.h>
+#include "views/moon_view.h"
+#include "utilities/weather.h"
 #include "modules/top_module.h"
 #include "modules/bottom_module.h"
 #include "modules/battery_module.h"
 #include "modules/step_tracker_module.h"
 #include "modules/splash_logo_module.h"
-#include "modules/moon_view_module.h"
-#include "modules/weather_module.h"
 #include "modules/weather_display_module.h"
 
 // ============================================================================
