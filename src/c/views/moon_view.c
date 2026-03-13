@@ -1,8 +1,8 @@
-#include "moon_view_module.h"
-#include "sun_tracker_module.h"
-#include "weather_module.h"
-#include "step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN
-#include "date_format.h"
+#include "moon_view.h"
+#include "../modules/sun_tracker_module.h"
+#include "../utilities/weather.h"
+#include "../modules/step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN
+#include "../utilities/date_format.h"
 
 static Window *s_moon_window = NULL;
 static TextLayer *s_sunrise_text_layer = NULL;

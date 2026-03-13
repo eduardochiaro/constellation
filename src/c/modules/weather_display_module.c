@@ -1,6 +1,6 @@
 #include "weather_display_module.h"
-#include "weather_module.h"
-#include "date_format.h"
+#include "../utilities/weather.h"
+#include "../utilities/date_format.h"
 
 #define WEATHER_ICON_SIZE 15
 

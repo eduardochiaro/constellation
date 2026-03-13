@@ -1,6 +1,6 @@
 #pragma once
 #include <pebble.h>
-#include "date_format.h"
+#include "../utilities/date_format.h"
 
 // Top Module - Configurable Date Display
 

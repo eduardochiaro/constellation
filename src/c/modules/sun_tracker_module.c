@@ -1,5 +1,5 @@
 #include "sun_tracker_module.h"
-#include "weather_module.h"
+#include "../utilities/weather.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -31,26 +31,43 @@ void sun_tracker_module_init(Window *window, GRect bounds) {
   s_sun_up_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_UP_IMAGE);
   s_sun_down_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_DOWN_IMAGE);
 
-  // Left icon
-  int left_x = 5;
-  int left_y = bounds.size.h / 2 - SUN_ICON_SIZE + 4;
+  // Compute arc geometry (mirrors moon_view sun_canvas_update_proc)
+  int radius, diameter;
+  GRect arc_bounds;
+
 #if defined(PBL_ROUND)
-  left_x += 8;
-  left_y -= 3;
+  const int BASE_RECT_WIDTH = 150;
+  const int BASE_RECT_HEIGHT = 168;
+  int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
+  int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
+  radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
+  diameter = radius * 2;
+  GPoint arc_center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
+  arc_bounds = GRect(arc_center.x - radius, y_offset + 7, diameter, diameter);
+#else
+  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
+  diameter = radius * 2 - 15;
+  GPoint arc_center = GPoint(bounds.origin.x + bounds.size.w / 2, bounds.origin.y + bounds.size.h + STEP_TRACK_MARGIN - 3);
+  arc_bounds = GRect(arc_center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
 #endif
+
+  // Arc center and effective radius for icon placement
+  int cx = arc_bounds.origin.x + arc_bounds.size.w / 2;
+  int cy = arc_bounds.origin.y + arc_bounds.size.h / 2;
+  int icon_radius = arc_bounds.size.w / 2;
+
+  // Left icon at left edge of arc
+  int left_x = cx - icon_radius;
+  int left_y = cy - SUN_ICON_SIZE - 2;
   s_left_icon_layer = bitmap_layer_create(GRect(left_x, left_y, SUN_ICON_SIZE, SUN_ICON_SIZE));
   if (s_left_icon_layer) {
     bitmap_layer_set_compositing_mode(s_left_icon_layer, GCompOpSet);
     layer_add_child(window_layer, bitmap_layer_get_layer(s_left_icon_layer));
   }
 
-  // Right icon
-  int right_x = bounds.size.w - SUN_ICON_SIZE - 3;
-  int right_y = bounds.size.h / 2 - SUN_ICON_SIZE + 4;
-#if defined(PBL_ROUND)
-  right_x -= 8;
-  right_y -= 4;
-#endif
+  // Right icon at right edge of arc
+  int right_x = cx + icon_radius - SUN_ICON_SIZE;
+  int right_y = cy - SUN_ICON_SIZE - 2;
   s_right_icon_layer = bitmap_layer_create(GRect(right_x, right_y, SUN_ICON_SIZE, SUN_ICON_SIZE));
   if (s_right_icon_layer) {
     bitmap_layer_set_compositing_mode(s_right_icon_layer, GCompOpSet);
