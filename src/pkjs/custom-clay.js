@@ -36,9 +36,9 @@ module.exports = function(minified) {
     }
     const currentImage = image();
     if (currentImage) {
-      clayConfig.getItemByMessageKey('SPLASH_LOGO').set("<img src='" + currentImage + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
+      clayConfig.getItemById('SPLASH_LOGO').set("<img src='" + currentImage + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
     } else {
-      clayConfig.getItemByMessageKey('SPLASH_LOGO').set('Splash Logo will not be displayed');
+      clayConfig.getItemById('SPLASH_LOGO').set('Splash Logo will not be displayed');
     }
   }
 

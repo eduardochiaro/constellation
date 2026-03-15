@@ -47,7 +47,7 @@
       },
       {
         "type": "text",
-        "messageKey": "SPLASH_LOGO",
+        "id": "SPLASH_LOGO",
         "label": "Splash Logo Preview",
         "defaultValue": ""
       },
