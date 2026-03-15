@@ -1,0 +1,247 @@
+[
+  {
+    "type": "heading",
+    "defaultValue": "Constellation Settings"
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Display Options"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_SECOND_TICKER",
+        "label": "Show Second Ticker",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_CLOCK_RING",
+        "label": "Show Clock Ring",
+        "defaultValue": false
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_MOON_VIEW",
+        "label": "Show Moon View on wrist flick",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "TRACKER_STYLE",
+        "label": "Use Line Style for trackers",
+        "defaultValue": false,
+        "capabilities": ["RECT"],
+        "description": "Line style is better for rectangular displays."
+       }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Splash Screen"
+      },
+      {
+        "type": "text",
+        "id": "SPLASH_LOGO",
+        "label": "Splash Logo Preview",
+        "defaultValue": ""
+      },
+      {
+        "type": "select",
+        "messageKey": "SPLASH_LOGO_STYLE",
+        "label": "Splash Logo Style",
+        "defaultValue": "1",
+        "options": [
+          {
+            "label": "None",
+            "value": "0"
+          },
+          {
+            "label": "Constellation (Black & White)",
+            "value": "1"
+          },
+          {
+            "label": "Constellation (Color)",
+            "value": "2"
+          },
+          {
+            "label": "House Varuun",
+            "value": "3"
+          },
+          {
+            "label": "Freestar Collective",
+            "value": "4"
+          },
+          {
+            "label": "SysDef",
+            "value": "5"
+          },
+          {
+            "label": "Crimson Fleet",
+            "value": "6"
+          },
+          {
+            "label": "Planet",
+            "value": "7"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Weather"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_WEATHER",
+        "label": "Show Weather",
+        "defaultValue": true
+      },
+      {
+        "type": "select",
+        "messageKey": "WEATHER_SCALE",
+        "label": "Weather Scale",
+        "defaultValue": "1",
+        "options": [
+          {
+            "label": "Celsius",
+            "value": "1"
+          },
+          {
+            "label": "Fahrenheit",
+            "value": "2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Modules"
+      },
+      {
+        "type": "select",
+        "messageKey": "TOP_MODULE_FORMAT",
+        "label": "Top Display Format",
+        "defaultValue": "weekday",
+        "options": [
+          {
+            "label": "Weekday",
+            "value": "weekday"
+          },
+          {
+            "label": "Month Day",
+            "value": "month_day"
+          },
+          {
+            "label": "YYYY-MM-DD",
+            "value": "yyyy_mm_dd"
+          },
+          {
+            "label": "DD/MM/YYYY",
+            "value": "dd_mm_yyyy"
+          },
+          {
+            "label": "MM/DD/YYYY",
+            "value": "mm_dd_yyyy"
+          },
+          {
+            "label": "Month Year",
+            "value": "month_year"
+          },
+          {
+            "label": "Weekday Day",
+            "value": "weekday_day"
+          },
+          {
+            "label": "Step Count",
+            "value": "step_count"
+          }
+        ]
+      },
+      {
+        "type": "select",
+        "messageKey": "BOTTOM_MODULE_FORMAT",
+        "label": "Bottom Display Format",
+        "defaultValue": "month_day",
+        "options": [
+          {
+            "label": "Weekday",
+            "value": "weekday"
+          },
+          {
+            "label": "Month Day",
+            "value": "month_day"
+          },
+          {
+            "label": "YYYY-MM-DD",
+            "value": "yyyy_mm_dd"
+          },
+          {
+            "label": "DD/MM/YYYY",
+            "value": "dd_mm_yyyy"
+          },
+          {
+            "label": "MM/DD/YYYY",
+            "value": "mm_dd_yyyy"
+          },
+          {
+            "label": "Month Year",
+            "value": "month_year"
+          },
+          {
+            "label": "Weekday Day",
+            "value": "weekday_day"
+          },
+          {
+            "label": "Step Count",
+            "value": "step_count"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Health"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_STEP_TRACKER",
+        "label": "Show Step Tracker",
+        "defaultValue": true
+      },
+      {
+        "type": "input",
+        "messageKey": "STEP_GOAL",
+        "label": "Daily Step Goal",
+        "defaultValue": "8000",
+        "attributes": {
+          "type": "number",
+          "min": 1000,
+          "max": 50000,
+          "step": 500
+        }      
+      }
+    ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
+  }
+]

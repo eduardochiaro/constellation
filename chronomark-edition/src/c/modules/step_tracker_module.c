@@ -52,7 +52,7 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
     if (s_walk_layer) {
       bitmap_layer_set_bitmap(s_walk_layer, s_walking_bitmap);
       bitmap_layer_set_compositing_mode(s_walk_layer, GCompOpSet);
-      bitmap_layer_set_background_color(s_walk_layer, GColorRed);
+      //bitmap_layer_set_background_color(s_walk_layer, );
       layer_add_child(window_layer, bitmap_layer_get_layer(s_walk_layer));
     }
   }
@@ -65,7 +65,7 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
     if (s_flag_layer) {
       bitmap_layer_set_bitmap(s_flag_layer, s_flag_bitmap);
       bitmap_layer_set_compositing_mode(s_flag_layer, GCompOpSet);
-      bitmap_layer_set_background_color(s_flag_layer, GColorRed);
+      //bitmap_layer_set_background_color(s_flag_layer, GColorRed);
       layer_add_child(window_layer, bitmap_layer_get_layer(s_flag_layer));
     }
   }
