@@ -1,7 +1,7 @@
 {
   "name": "constellation",
   "author": "Eduardo Chiaro",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "keywords": [
     "pebble-watchface",
     "pebble",
@@ -42,8 +42,7 @@
       "WEATHER_DATA",
       "SHOW_MOON_VIEW",
       "SHOW_WEATHER",
-      "WEATHER_SCALE",
-      "SPLASH_LOGO"
+      "WEATHER_SCALE"
     ],
     "resources": {
       "media": [
