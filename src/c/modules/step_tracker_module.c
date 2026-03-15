@@ -29,50 +29,43 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
   s_flag_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FLAG_IMAGE);
 
   // Compute arc geometry (mirrors canvas_update_proc in constellation.c)
-  int radius, diameter;
-  GRect arc_bounds;
+  int radius;
 
 #if defined(PBL_ROUND)
-  const int BASE_RECT_WIDTH = 150;
-  const int BASE_RECT_HEIGHT = 168;
-  int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
-  int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
+  int BASE_RECT_WIDTH = 150;
+  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
+    BASE_RECT_WIDTH = 175; 
+  }
+  //const int BASE_RECT_HEIGHT = 168;
   radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2;
-  GPoint arc_center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(arc_center.x - radius, y_offset + 7, diameter, diameter);
 #else
-  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2 - 15;
-  GPoint arc_center = GPoint(bounds.origin.x + bounds.size.w / 2, bounds.origin.y + bounds.size.h + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(arc_center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
+  radius = bounds.size.w / 2 - STEP_TRACK_MARGIN;
 #endif
 
-  // Arc center and effective radius for icon placement
-  int cx = arc_bounds.origin.x + arc_bounds.size.w / 2;
-  int cy = arc_bounds.origin.y + arc_bounds.size.h / 2;
-  int icon_radius = arc_bounds.size.w / 2;  // middle of the track
+  int cy = bounds.size.h / 2;
 
   // Walking icon at 270° (top of arc)
   if (s_walking_bitmap) {
-    int icon_x = cx - icon_radius;
-    int icon_y = cy - WALKING_ICON_SIZE - 2;
+    int icon_x = 0 + (bounds.size.w / 2 - radius);
+    int icon_y = cy - WALKING_ICON_SIZE;
     s_walk_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
     if (s_walk_layer) {
       bitmap_layer_set_bitmap(s_walk_layer, s_walking_bitmap);
       bitmap_layer_set_compositing_mode(s_walk_layer, GCompOpSet);
+      bitmap_layer_set_background_color(s_walk_layer, GColorRed);
       layer_add_child(window_layer, bitmap_layer_get_layer(s_walk_layer));
     }
   }
 
   // Flag icon at 90° (bottom of arc)
   if (s_flag_bitmap) {
-    int flag_x = cx + icon_radius - WALKING_ICON_SIZE;
-    int flag_y = cy - WALKING_ICON_SIZE - 2;
+    int flag_x = bounds.size.w - (bounds.size.w / 2 - radius) - WALKING_ICON_SIZE;
+    int flag_y = cy - WALKING_ICON_SIZE;
     s_flag_layer = bitmap_layer_create(GRect(flag_x, flag_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
     if (s_flag_layer) {
       bitmap_layer_set_bitmap(s_flag_layer, s_flag_bitmap);
       bitmap_layer_set_compositing_mode(s_flag_layer, GCompOpSet);
+      bitmap_layer_set_background_color(s_flag_layer, GColorRed);
       layer_add_child(window_layer, bitmap_layer_get_layer(s_flag_layer));
     }
   }
@@ -134,17 +127,22 @@ void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int rad
       }
     }
   } else {
+    int track_width = STEP_TRACK_WIDTH;
+    if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
+      track_width = 20;
+    }
+
     // Arc style - original curved design
     // Draw base step track (dark gray arc from 90° to 270°)
     graphics_context_set_fill_color(ctx, GColorDarkGray);
-    graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
+    graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, track_width,
                          DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
     
     // Draw step progress
     if (progress > 0) {
       int32_t start_angle = 270 - (int32_t)(180.0f * progress);
       graphics_context_set_fill_color(ctx, GColorWhite);
-      graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
+      graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, track_width,
                            DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
     }
   }
