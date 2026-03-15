@@ -1,0 +1,218 @@
+{
+  "name": "constellation",
+  "author": "Eduardo Chiaro",
+  "version": "2.1.0",
+  "keywords": [
+    "pebble-watchface",
+    "pebble",
+    "startfield",
+    "constellation"
+  ],
+  "private": true,
+  "dependencies": {
+    "@rebble/clay": "^1.0.8"
+  },
+  "pebble": {
+    "displayName": "Constellation",
+    "uuid": "acdce9c9-bc53-4761-97a7-dcb6e25c6641",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery",
+      "flint"
+    ],
+    "watchapp": {
+      "watchface": true
+    },
+    "messageKeys": [
+      "SHOW_SECOND_TICKER",
+      "STEP_GOAL",
+      "SPLASH_LOGO_STYLE",
+      "SHOW_CLOCK_RING",
+      "SHOW_SPLASH_SCREEN",
+      "TOP_MODULE_FORMAT",
+      "BOTTOM_MODULE_FORMAT",
+      "TRACKER_STYLE",
+      "SHOW_STEP_TRACKER",
+      "WEATHER_DATA",
+      "SHOW_MOON_VIEW",
+      "SHOW_WEATHER",
+      "WEATHER_SCALE",
+      "SPLASH_LOGO"
+    ],
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "PM_ACTIVE_IMAGE",
+          "file": "pm_active.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "PM_INACTIVE_IMAGE",
+          "file": "pm_inactive.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "AM_ACTIVE_IMAGE",
+          "file": "am_active.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "AM_INACTIVE_IMAGE",
+          "file": "am_inactive.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WALKING_IMAGE",
+          "file": "walking.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "FLAG_IMAGE",
+          "file": "flag.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "SUN_UP_IMAGE",
+          "file": "sun_up.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "SUN_DOWN_IMAGE",
+          "file": "sun_down.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "CONSTELLATION_BW_LOGO_IMAGE",
+          "file": "splash_logos/constellation_bw_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "CONSTELLATION_COLOR_LOGO_IMAGE",
+          "file": "splash_logos/constellation_color_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "HOUSEVARUUN_LOGO_IMAGE",
+          "file": "splash_logos/house_varuun_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "FREESTAR_LOGO_IMAGE",
+          "file": "splash_logos/freestar_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "SYSDEF_LOGO_IMAGE",
+          "file": "splash_logos/sysdef_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "CRIMSON_LOGO_IMAGE",
+          "file": "splash_logos/crimson_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_BACKGROUND_IMAGE",
+          "file": "moon/moon_background.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_1_IMAGE",
+          "file": "moon/moon_phase_1.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_2_IMAGE",
+          "file": "moon/moon_phase_2.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_3_IMAGE",
+          "file": "moon/moon_phase_3.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_4_IMAGE",
+          "file": "moon/moon_phase_4.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_5_IMAGE",
+          "file": "moon/moon_phase_5.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_6_IMAGE",
+          "file": "moon/moon_phase_6.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MOON_PHASE_7_IMAGE",
+          "file": "moon/moon_phase_7.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_EMPTY_IMAGE",
+          "file": "weather/empty.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_SUN_IMAGE",
+          "file": "weather/sun.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_CLOUDY_IMAGE",
+          "file": "weather/cloudy.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_CLOUDY_MOON_IMAGE",
+          "file": "weather/cloudy_moon.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_RAINY_IMAGE",
+          "file": "weather/rain.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_SNOWY_IMAGE",
+          "file": "weather/snow.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_OVERCAST_IMAGE",
+          "file": "weather/overcast.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_FOG_IMAGE",
+          "file": "weather/fog.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_THUNDERSTORM_IMAGE",
+          "file": "weather/thunderstorm.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WEATHER_MOON_IMAGE",
+          "file": "weather/moon.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "MENU_ICON",
+          "file": "menu_icon.png",
+          "menuIcon": true
+        }
+      ]
+    }
+  }
+}

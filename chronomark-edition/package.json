@@ -5,7 +5,7 @@
   "keywords": [
     "pebble-watchface",
     "pebble",
-    "startfield",
+    "chronomark",
     "constellation"
   ],
   "private": true,
@@ -13,17 +13,11 @@
     "@rebble/clay": "^1.0.8"
   },
   "pebble": {
-    "displayName": "Constellation",
-    "uuid": "acdce9c9-bc53-4761-97a7-dcb6e25c6641",
+    "displayName": "Constellation - Chronomark Edition",
+    "uuid": "6b9713e7-ffe3-49f6-94b0-3dd3db67b9c1",
     "sdkVersion": "3",
     "enableMultiJS": true,
     "targetPlatforms": [
-      "aplite",
-      "basalt",
-      "chalk",
-      "diorite",
-      "emery",
-      "flint",
       "gabbro"
     ],
     "watchapp": {

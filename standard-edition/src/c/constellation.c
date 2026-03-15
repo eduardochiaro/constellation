@@ -1,11 +1,11 @@
 #include <pebble.h>
-#include "views/moon_view.h"
-#include "utilities/weather.h"
 #include "modules/top_module.h"
 #include "modules/bottom_module.h"
 #include "modules/battery_module.h"
 #include "modules/step_tracker_module.h"
 #include "modules/splash_logo_module.h"
+#include "modules/moon_view_module.h"
+#include "utilities/weather.h"
 #include "modules/weather_display_module.h"
 
 // ============================================================================
@@ -119,15 +119,11 @@ static void draw_clock_ring(GContext *ctx, GRect bounds, int radius) {
     ring_outer_radius += 10;
   }
   if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeEmery) {
-    ring_outer_radius -= 15;
-  }
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    // Place just inside the inner border of the outer decorative ring
-    ring_outer_radius -= 2;
+    ring_outer_radius -= 15; // Adjust for round watches
   }
   int tick_length_normal = 2;  // Length of normal tick marks
-  int tick_length_major = 3;   // Length of major tick marks (every 5th)
-  graphics_context_set_stroke_color(ctx, PBL_IF_ROUND_ELSE(GColorWhite, GColorDarkGray));
+  int tick_length_major = 5;   // Length of major tick marks (every 5th)
+  graphics_context_set_stroke_color(ctx, GColorDarkGray);
   for (int i = 0; i < 60; i++) {
     int32_t angle = (TRIG_MAX_ANGLE * i) / 60;
     bool is_major = (i % 5 == 0);
@@ -149,59 +145,8 @@ static void draw_clock_ring(GContext *ctx, GRect bounds, int radius) {
   }
 }
 
-// Draws an outer decorative ring with hour numbers (Gabbro only)
-static void draw_gabbro_outer_ring(GContext *ctx, GRect bounds) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  GPoint screen_center = grect_center_point(&bounds);
-  int outer_radius = bounds.size.w / 2 - 2;   // 2px inset from edge
-  int inner_radius = outer_radius - 26;        // 18px band for numbers
-
-  // Outer border (light gray)
-  graphics_context_set_stroke_color(ctx, GColorLightGray);
-  graphics_context_set_stroke_width(ctx, 2);
-  graphics_draw_circle(ctx, screen_center, outer_radius);
-
-  // Inner border (white)
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_stroke_width(ctx, 1);
-  graphics_draw_circle(ctx, screen_center, inner_radius);
-
-}
-static void draw_gabbro_outer_ring_numbers(GContext *ctx, GRect bounds) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  GPoint screen_center = grect_center_point(&bounds);
-  int outer_radius = bounds.size.w / 2 - 2;   // 2px inset from edge
-  int inner_radius = outer_radius - 26;        // 18px band for numbers
-
-  // Draw 12, 3, 6, 9 between the two rings
-  int num_radius = (outer_radius + inner_radius) / 2;  // midpoint of the band
-  GFont font = fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS);
-  const char *numbers[] = { "12", "3", "6", "9" };
-  // Angles: 12=top(0°), 3=right(90°), 6=bottom(180°), 9=left(270°)
-  const int angles[] = { 0, 90, 180, 270 };
-
-  for (int i = 0; i < 4; i++) {
-    int32_t trig_angle = DEG_TO_TRIGANGLE(angles[i]);
-    int nx = screen_center.x + (int16_t)((sin_lookup(trig_angle) * num_radius) / TRIG_MAX_RATIO);
-    int ny = screen_center.y - (int16_t)((cos_lookup(trig_angle) * num_radius) / TRIG_MAX_RATIO);
-    GSize text_size = graphics_text_layout_get_content_size(
-        numbers[i], font, GRect(0, 0, 24, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter);
-    GRect text_rect = GRect(nx - text_size.w / 2, ny - text_size.h / 2 - 2,
-                            text_size.w, text_size.h);
-    graphics_context_set_text_color(ctx, GColorWhite);
-    graphics_draw_text(ctx, numbers[i], font, text_rect,
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  }
-}
-
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
-
-  // Gabbro outer decorative ring
-  draw_gabbro_outer_ring(ctx, bounds);
 
   // Calculate arc dimensions for step tracker based on platform
   int radius, diameter;
@@ -210,12 +155,8 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
 
 #if defined(PBL_ROUND)
   // Round watch layout
-  int BASE_RECT_WIDTH = 150;
-  int BASE_RECT_HEIGHT = 168;
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    BASE_RECT_WIDTH = 174; 
-    BASE_RECT_HEIGHT = 190;
-  }
+  const int BASE_RECT_WIDTH = 150;
+  const int BASE_RECT_HEIGHT = 168;
   int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
   int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
 
@@ -231,90 +172,72 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   arc_bounds = GRect(center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
 #endif
 
+  // Draw clock ring only if requested (not every second)
+  draw_clock_ring(ctx, bounds, radius); // Only call this when settings change, not every second
+
   // Draw step tracker (delegated to module)
   if (s_show_step_tracker) {
     step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_tracker_use_line);
   }
 
-  // Draw clock ring only if requested (not every second)
-  draw_clock_ring(ctx, bounds, radius); // Only call this when settings change, not every second
-
   // Calculate second indicator position
   GPoint indicator;
 
+#if defined(PBL_ROUND)
+  // Circular motion for round watches
+  const int circle_inset = 6;
+  GPoint screen_center = grect_center_point(&bounds);
+  int circle_radius = bounds.size.w / 2 - circle_inset;
+  if (circle_radius < 5) circle_radius = 5;
+  int32_t angle = (TRIG_MAX_ANGLE * s_current_second) / 60;
+  indicator = GPoint(
+    screen_center.x + (int16_t)((sin_lookup(angle) * circle_radius) / TRIG_MAX_RATIO),
+    screen_center.y - (int16_t)((cos_lookup(angle) * circle_radius) / TRIG_MAX_RATIO)
+  );
+#else
+  // Perimeter motion for rectangular watches
+  const int inset = 3;
+  int left = bounds.origin.x + inset;
+  int right = bounds.origin.x + bounds.size.w - 1 - inset;
+  int top = bounds.origin.y + inset;
+  int bottom = bounds.origin.y + bounds.size.h - 1 - inset;
+  int width = right - left;
+  int height = bottom - top;
+  indicator = GPoint(left, top);
+  if (width > 0 && height > 0) {
+    int perimeter = 2 * (width + height);
+    int dist = (perimeter * s_current_second) / 60;
+    int offset = width / 2;
+    dist = (dist + offset) % perimeter;
+    // Determine position along perimeter
+    if (dist <= width) {
+      // Top edge
+      indicator.x = left + dist;
+      indicator.y = top;
+    } else if (dist <= width + height) {
+      // Right edge
+      indicator.x = right;
+      indicator.y = top + (dist - width);
+    } else if (dist <= 2 * width + height) {
+      // Bottom edge
+      indicator.x = right - (dist - width - height);
+      indicator.y = bottom;
+    } else {
+      // Left edge
+      indicator.x = left;
+      indicator.y = bottom - (dist - 2 * width - height);
+    }
+  }
+#endif
+
   // Draw second ticker if enabled
   if (s_show_second_ticker) {
-
-  #if defined(PBL_ROUND)
-    // Circular motion for round watches
-    const int circle_inset = 2;
-    GPoint screen_center = grect_center_point(&bounds);
-    int circle_radius = bounds.size.w / 2 - circle_inset;
-    if (circle_radius < 5) circle_radius = 5;
-    int32_t angle = (TRIG_MAX_ANGLE * s_current_second) / 60;
-    indicator = GPoint(
-      screen_center.x + (int16_t)((sin_lookup(angle) * circle_radius) / TRIG_MAX_RATIO),
-      screen_center.y - (int16_t)((cos_lookup(angle) * circle_radius) / TRIG_MAX_RATIO)
-    );
-  #else
-    // Perimeter motion for rectangular watches
-    const int inset = 3;
-    int left = bounds.origin.x + inset;
-    int right = bounds.origin.x + bounds.size.w - 1 - inset;
-    int top = bounds.origin.y + inset;
-    int bottom = bounds.origin.y + bounds.size.h - 1 - inset;
-    int width = right - left;
-    int height = bottom - top;
-    indicator = GPoint(left, top);
-    if (width > 0 && height > 0) {
-      int perimeter = 2 * (width + height);
-      int dist = (perimeter * s_current_second) / 60;
-      int offset = width / 2;
-      dist = (dist + offset) % perimeter;
-      // Determine position along perimeter
-      if (dist <= width) {
-        // Top edge
-        indicator.x = left + dist;
-        indicator.y = top;
-      } else if (dist <= width + height) {
-        // Right edge
-        indicator.x = right;
-        indicator.y = top + (dist - width);
-      } else if (dist <= 2 * width + height) {
-        // Bottom edge
-        indicator.x = right - (dist - width - height);
-        indicator.y = bottom;
-      } else {
-        // Left edge
-        indicator.x = left;
-        indicator.y = bottom - (dist - 2 * width - height);
-      }
-    }
-  #endif
     int half = SECONDS_INDICATOR_SIZE / 2;
-
-    // Gabbro: draw a line from inner ring edge to indicator (lighter red)
-    if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-      int inner_ring_radius = bounds.size.w / 2 - 2 - 20;  // matches draw_gabbro_outer_ring
-      int32_t sec_angle = (TRIG_MAX_ANGLE * s_current_second) / 60;
-      GPoint center_pt = grect_center_point(&bounds);
-      GPoint ring_start = GPoint(
-        center_pt.x + (int16_t)((sin_lookup(sec_angle) * inner_ring_radius) / TRIG_MAX_RATIO),
-        center_pt.y - (int16_t)((cos_lookup(sec_angle) * inner_ring_radius) / TRIG_MAX_RATIO)
-      );
-      graphics_context_set_stroke_color(ctx, GColorDarkCandyAppleRed);
-      graphics_context_set_stroke_width(ctx, SECONDS_INDICATOR_SIZE);
-      graphics_context_set_antialiased(ctx, false);
-      graphics_draw_line(ctx, ring_start, indicator);
-    }
-
-    graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorOrange, GColorWhite));
+    graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorRed, GColorWhite));
     graphics_fill_rect(ctx, GRect(indicator.x - half, indicator.y - half,
                                   SECONDS_INDICATOR_SIZE, SECONDS_INDICATOR_SIZE), 
                        0, GCornerNone);
   }
-
-  draw_gabbro_outer_ring_numbers(ctx, bounds);
 }
 
 // ============================================================================
@@ -560,7 +483,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   
   // Handle clock ring visibility setting
   Tuple *show_ring_tuple = dict_find(iter, MESSAGE_KEY_SHOW_CLOCK_RING);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Received clock ring setting: %s", show_ring_tuple ? (show_ring_tuple->value->int32 == 1 ? "ON" : "OFF") : "N/A");
   if (show_ring_tuple) {
     s_show_clock_ring = (show_ring_tuple->value->int32 == 1);
     if (s_canvas_layer) {
