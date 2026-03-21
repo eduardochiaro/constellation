@@ -3,3 +3,5 @@ build/
 node_modules/
 .pebble/
 .lock-waf_darwin_build
+chronomark-edition/src/c/utilities
+standard-edition/src/c/utilities
