@@ -7,14 +7,21 @@ static GBitmap *s_flag_bitmap = NULL;
 static int s_step_count = 0;
 static int s_step_goal = 8000;
 static Layer *s_parent_canvas_layer = NULL;
+static int s_last_health_step_count = 0;
 
 #if defined(PBL_HEALTH)
 static void health_handler(HealthEventType event, void *context) {
   // Update step count when health data changes
   if (event == HealthEventMovementUpdate || event == HealthEventSignificantUpdate) {
-    s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
-    if (s_parent_canvas_layer) {
-      layer_mark_dirty(s_parent_canvas_layer);
+    int new_count = (int)health_service_sum_today(HealthMetricStepCount);
+    // Only redraw if step count changed meaningfully (by at least 10 steps)
+    // to avoid excessive redraws during active movement
+    if (new_count - s_last_health_step_count >= 10 || new_count < s_last_health_step_count) {
+      s_step_count = new_count;
+      s_last_health_step_count = new_count;
+      if (s_parent_canvas_layer) {
+        layer_mark_dirty(s_parent_canvas_layer);
+      }
     }
   }
 }
