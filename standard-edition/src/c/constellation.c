@@ -44,6 +44,7 @@ static GBitmap *s_pm_inactive_bitmap;
 static bool s_is_pm;
 static int s_current_second;
 static int s_last_weather_minute = -1;
+static Layer *s_clock_ring_layer;
 
 // User settings (persisted)
 static bool s_show_second_ticker = true;
@@ -110,36 +111,41 @@ static void ampm_update_proc(Layer *layer, GContext *ctx) {
 }
 
 
-// Draws the static clock ring (tick marks) only when needed
-static void draw_clock_ring(GContext *ctx, GRect bounds, int radius) {
+// Draws the static clock ring on its own layer (only redrawn when settings change)
+static void clock_ring_update_proc(Layer *layer, GContext *ctx) {
   if (!s_show_clock_ring) return;
+  GRect bounds = layer_get_bounds(layer);
+  int radius;
+#if defined(PBL_ROUND)
+  const int BASE_RECT_WIDTH = 150;
+  radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
+#else
+  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
+#endif
   GPoint ring_center = grect_center_point(&bounds);
-  int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3; // Just inside the step tracker
+  int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3;
   if (!s_show_step_tracker) {
     ring_outer_radius += 10;
   }
   if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeEmery) {
-    ring_outer_radius -= 15; // Adjust for round watches
+    ring_outer_radius -= 15;
   }
-  int tick_length_normal = 2;  // Length of normal tick marks
-  int tick_length_major = 5;   // Length of major tick marks (every 5th)
+  int tick_length_normal = 2;
+  int tick_length_major = 5;
   graphics_context_set_stroke_color(ctx, GColorDarkGray);
   for (int i = 0; i < 60; i++) {
     int32_t angle = (TRIG_MAX_ANGLE * i) / 60;
     bool is_major = (i % 5 == 0);
     int tick_length = is_major ? tick_length_major : tick_length_normal;
     int ring_inner_radius = ring_outer_radius - tick_length;
-    // Calculate outer point of tick mark
     GPoint outer = GPoint(
       ring_center.x + (int16_t)((sin_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO),
       ring_center.y - (int16_t)((cos_lookup(angle) * ring_outer_radius) / TRIG_MAX_RATIO)
     );
-    // Calculate inner point of tick mark
     GPoint inner = GPoint(
       ring_center.x + (int16_t)((sin_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO),
       ring_center.y - (int16_t)((cos_lookup(angle) * ring_inner_radius) / TRIG_MAX_RATIO)
     );
-    // Draw tick mark with appropriate thickness
     graphics_context_set_stroke_width(ctx, is_major ? 2 : 1);
     graphics_draw_line(ctx, outer, inner);
   }
@@ -172,8 +178,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   arc_bounds = GRect(center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
 #endif
 
-  // Draw clock ring only if requested (not every second)
-  draw_clock_ring(ctx, bounds, radius); // Only call this when settings change, not every second
+  // Clock ring is on its own static layer now — not redrawn here
 
   // Draw step tracker (delegated to module)
   if (s_show_step_tracker) {
@@ -253,14 +258,19 @@ static void update_time() {
     return;
   }
   
-  // Get current step count (only if step tracker is enabled)
-  int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
-  
-  // Update weather display only on minute change (day/night calc is expensive per-second)
-  if (tick_time->tm_min != s_last_weather_minute) {
+  // Only update step count, weather, battery on minute boundaries
+  bool minute_changed = (tick_time->tm_min != s_last_weather_minute);
+  if (minute_changed) {
     s_last_weather_minute = tick_time->tm_min;
     weather_display_module_update();
+    if (s_show_step_tracker) {
+      step_tracker_module_update();
+    }
+    battery_module_update();
   }
+  
+  int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
+  
   top_module_update(tick_time, s_top_module_format, step_count);
   bottom_module_update(tick_time, s_bottom_module_format, step_count);
   
@@ -270,17 +280,14 @@ static void update_time() {
   text_layer_set_text(s_time_layer, time_buffer);
   s_current_second = tick_time->tm_sec;
   
-  // Update AM/PM indicator
-  s_is_pm = (tick_time->tm_hour >= 12);
-  if (s_ampm_layer) {
-    layer_mark_dirty(s_ampm_layer);
+  // Update AM/PM indicator only on hour change
+  bool new_is_pm = (tick_time->tm_hour >= 12);
+  if (new_is_pm != s_is_pm) {
+    s_is_pm = new_is_pm;
+    if (s_ampm_layer) {
+      layer_mark_dirty(s_ampm_layer);
+    }
   }
-  
-  // Update step tracker and battery
-  if (s_show_step_tracker) {
-    step_tracker_module_update();
-  }
-  battery_module_update();
   
   if (s_canvas_layer) {
     layer_mark_dirty(s_canvas_layer);
@@ -348,6 +355,13 @@ static void load_watchface_ui(void *data) {
     }
   }
   
+  // Create clock ring on its own layer (only redraws when settings change)
+  s_clock_ring_layer = layer_create(bounds);
+  if (s_clock_ring_layer) {
+    layer_set_update_proc(s_clock_ring_layer, clock_ring_update_proc);
+    layer_add_child(window_layer, s_clock_ring_layer);
+  }
+  
   // Create canvas layer for step tracker and second indicator
   // Add this LAST so the second ticker appears on top of all other elements
   s_canvas_layer = layer_create(bounds);
@@ -388,6 +402,10 @@ static void prv_window_unload(Window *window) {
   if (s_canvas_layer) {
     layer_destroy(s_canvas_layer);
     s_canvas_layer = NULL;
+  }
+  if (s_clock_ring_layer) {
+    layer_destroy(s_clock_ring_layer);
+    s_clock_ring_layer = NULL;
   }
   if (s_ampm_layer) {
     layer_destroy(s_ampm_layer);
@@ -476,6 +494,8 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *show_ticker_tuple = dict_find(iter, MESSAGE_KEY_SHOW_SECOND_TICKER);
   if (show_ticker_tuple) {
     s_show_second_ticker = (show_ticker_tuple->value->int32 == 1);
+    // Switch tick frequency based on whether seconds are shown
+    tick_timer_service_subscribe(s_show_second_ticker ? SECOND_UNIT : MINUTE_UNIT, tick_handler);
     if (s_canvas_layer) {
       layer_mark_dirty(s_canvas_layer);
     }
@@ -485,8 +505,8 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   Tuple *show_ring_tuple = dict_find(iter, MESSAGE_KEY_SHOW_CLOCK_RING);
   if (show_ring_tuple) {
     s_show_clock_ring = (show_ring_tuple->value->int32 == 1);
-    if (s_canvas_layer) {
-      layer_mark_dirty(s_canvas_layer);
+    if (s_clock_ring_layer) {
+      layer_mark_dirty(s_clock_ring_layer);
     }
   }
   
@@ -539,6 +559,10 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     if (s_canvas_layer) {
       layer_mark_dirty(s_canvas_layer);
     }
+    // Clock ring radius depends on step tracker visibility
+    if (s_clock_ring_layer) {
+      layer_mark_dirty(s_clock_ring_layer);
+    }
   }
   
   // Handle show moon view setting
@@ -575,6 +599,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     
     // Force full redraw of all elements
     layer_mark_dirty(s_canvas_layer);
+    if (s_clock_ring_layer) {
+      layer_mark_dirty(s_clock_ring_layer);
+    }
     if (s_ampm_layer) {
       layer_mark_dirty(s_ampm_layer);
     }
@@ -615,8 +642,8 @@ static void prv_init(void) {
     window_stack_push(s_window, true);
   }
   
-  // Subscribe to services (central only)
-  tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+  // Subscribe to services — use SECOND_UNIT only when second ticker is enabled
+  tick_timer_service_subscribe(s_show_second_ticker ? SECOND_UNIT : MINUTE_UNIT, tick_handler);
   accel_tap_service_subscribe(accel_tap_handler);
   
   // Modules handle their own subscriptions
