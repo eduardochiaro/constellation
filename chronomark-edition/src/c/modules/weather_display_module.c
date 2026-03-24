@@ -18,7 +18,7 @@ void weather_display_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
 
   s_center_x = bounds.size.w / 2;
-  s_center_y = bounds.size.h / 2 - 61;
+  s_center_y = bounds.size.h / 2 - 92;
 
   // Temperature text — right of center, leaves room for icon on the left
   s_weather_layer = text_layer_create(GRect(0, s_center_y, s_center_x, 24));

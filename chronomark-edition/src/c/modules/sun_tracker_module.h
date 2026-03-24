@@ -8,7 +8,7 @@
 void sun_tracker_module_init(Window *window, GRect bounds);
 
 // Draw the sun tracker bar (called from a canvas update proc)
-void sun_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds, bool use_line_style);
+void sun_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds);
 
 // Update sun tracker state (recalculates progress from current time + weather data)
 void sun_tracker_module_update(void);

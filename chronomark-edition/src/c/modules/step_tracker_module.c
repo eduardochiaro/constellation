@@ -9,7 +9,6 @@ static int s_step_goal = 8000;
 static Layer *s_parent_canvas_layer = NULL;
 static int s_last_health_step_count = 0;
 
-#if defined(PBL_HEALTH)
 static void health_handler(HealthEventType event, void *context) {
   // Update step count when health data changes
   if (event == HealthEventMovementUpdate || event == HealthEventSignificantUpdate) {
@@ -25,7 +24,6 @@ static void health_handler(HealthEventType event, void *context) {
     }
   }
 }
-#endif
 
 void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer) {
   Layer *window_layer = window_get_root_layer(window);
@@ -36,18 +34,7 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
   s_flag_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FLAG_IMAGE);
 
   // Compute arc geometry (mirrors canvas_update_proc in constellation.c)
-  int radius;
-
-#if defined(PBL_ROUND)
-  int BASE_RECT_WIDTH = 150;
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    BASE_RECT_WIDTH = 175; 
-  }
-  //const int BASE_RECT_HEIGHT = 168;
-  radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
-#else
-  radius = bounds.size.w / 2 - STEP_TRACK_MARGIN;
-#endif
+  int radius = 175 / 2 + STEP_TRACK_MARGIN;
 
   int cy = bounds.size.h / 2;
 
@@ -78,87 +65,33 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
   }
   
   // Initialize step count
-#if defined(PBL_HEALTH)
   s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
-#endif
 }
 
-void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds, bool use_line_style) {
+void step_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds) {
   // Calculate progress
   float progress = (s_step_goal > 0) ? ((float)s_step_count / (float)s_step_goal) : 0;
   progress = (progress < 0) ? 0 : (progress > 1.0f) ? 1.0f : progress;
   
-  if (use_line_style) {
-    // Line style - U-shaped perimeter along bottom and sides
-    const int line_width = STEP_TRACK_WIDTH;
-    const int margin = 3;
-    
-    // Calculate the perimeter path: left side + bottom + right side
-    int left_x = margin;
-    int right_x = bounds.size.w - margin - line_width;
-    int top_y = bounds.size.h / 2 + 7; // Start from middle-bottom area
-    int bottom_y = bounds.size.h - margin - line_width;
-    
-    int left_height = bottom_y - top_y + 15;
-    int bottom_width = right_x - left_x;
-    int total_perimeter = left_height + bottom_width + left_height; // left + bottom + right
-    
-    // Calculate progress distance along perimeter
-    int progress_distance = (int)(total_perimeter * progress);
-    
-    // Draw base perimeter (dark gray)
-    graphics_context_set_fill_color(ctx, GColorDarkGray);
-    // Left side
-    graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-    // Bottom
-    graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
-    // Right side
-    graphics_fill_rect(ctx, GRect(right_x, top_y, line_width, left_height), 0, GCornerNone);
+  int track_width = STEP_TRACK_WIDTH;
 
-    // Draw progress (white) above all gray bars
-    if (progress > 0) {
-      graphics_context_set_fill_color(ctx, GColorWhite);
-      if (progress_distance <= left_height) {
-        // Progress on left side (top to bottom)
-        int fill_height = progress_distance;
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, fill_height), 0, GCornerNone);
-      } else if (progress_distance <= left_height + bottom_width) {
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-        int bottom_progress = progress_distance - left_height;
-        graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_progress, line_width), 0, GCornerNone);
-      } else {
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-        graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
-        int right_progress = progress_distance - left_height - bottom_width - 15;
-        graphics_fill_rect(ctx, GRect(right_x, bottom_y - right_progress, line_width, right_progress), 0, GCornerNone);
-      }
-    }
-  } else {
-    int track_width = STEP_TRACK_WIDTH;
-    if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-      track_width = 20;
-    }
-
-    // Arc style - original curved design
-    // Draw base step track (dark gray arc from 90° to 270°)
-    graphics_context_set_fill_color(ctx, GColorDarkGray);
+  // Arc style - original curved design
+  // Draw base step track (dark gray arc from 90° to 270°)
+  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, track_width,
+                        DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
+  
+  // Draw step progress
+  if (progress > 0) {
+    int32_t start_angle = 270 - (int32_t)(180.0f * progress);
+    graphics_context_set_fill_color(ctx, GColorWhite);
     graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, track_width,
-                         DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
-    
-    // Draw step progress
-    if (progress > 0) {
-      int32_t start_angle = 270 - (int32_t)(180.0f * progress);
-      graphics_context_set_fill_color(ctx, GColorWhite);
-      graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, track_width,
-                           DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
-    }
+                          DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
   }
 }
 
 void step_tracker_module_update(void) {
-#if defined(PBL_HEALTH)
   s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
-#endif
   if (s_parent_canvas_layer) {
     layer_mark_dirty(s_parent_canvas_layer);
   }
@@ -176,16 +109,12 @@ int step_tracker_module_get_count(void) {
 }
 
 void step_tracker_module_subscribe(void) {
-#if defined(PBL_HEALTH)
   health_service_events_subscribe(health_handler, NULL);
   s_step_count = (int)health_service_sum_today(HealthMetricStepCount);
-#endif
 }
 
 void step_tracker_module_unsubscribe(void) {
-#if defined(PBL_HEALTH)
   health_service_events_unsubscribe();
-#endif
 }
 
 void step_tracker_module_deinit(void) {

@@ -35,7 +35,6 @@ void sun_tracker_module_init(Window *window, GRect bounds) {
   int radius, diameter;
   GRect arc_bounds;
 
-#if defined(PBL_ROUND)
   const int BASE_RECT_WIDTH = 150;
   const int BASE_RECT_HEIGHT = 168;
   int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
@@ -44,12 +43,6 @@ void sun_tracker_module_init(Window *window, GRect bounds) {
   diameter = radius * 2;
   GPoint arc_center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
   arc_bounds = GRect(arc_center.x - radius, y_offset + 7, diameter, diameter);
-#else
-  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2 - 15;
-  GPoint arc_center = GPoint(bounds.origin.x + bounds.size.w / 2, bounds.origin.y + bounds.size.h + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(arc_center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
-#endif
 
   // Arc center and effective radius for icon placement
   int cx = arc_bounds.origin.x + arc_bounds.size.w / 2;
@@ -146,61 +139,19 @@ void sun_tracker_module_update(void) {
   }
 }
 
-void sun_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds, bool use_line_style) {
-  if (use_line_style) {
-    // Line style - U-shaped perimeter along bottom and sides (same geometry as step tracker)
-    const int line_width = STEP_TRACK_WIDTH;
-    const int margin = 3;
+void sun_tracker_module_draw(Layer *layer, GContext *ctx, GRect bounds, int radius, GRect arc_bounds) {
+  // Arc style - curved design (mirrors the step tracker arc)
+  // Step tracker uses 90° to 270° (left arc). Sun tracker uses 270° to 90° (right arc).
+  graphics_context_set_fill_color(ctx, GColorDarkGray);
+  graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
+                        DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
 
-    int left_x = margin;
-    int right_x = bounds.size.w - margin - line_width;
-    int top_y = bounds.size.h / 2 + 7;
-    int bottom_y = bounds.size.h - margin - line_width;
-
-    int left_height = bottom_y - top_y + 15;
-    int bottom_width = right_x - left_x;
-    int total_perimeter = left_height + bottom_width + left_height;
-
-    int progress_distance = (int)(total_perimeter * s_progress);
-
-    // Draw base perimeter (dark gray)
-    graphics_context_set_fill_color(ctx, GColorDarkGray);
-    graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
-    graphics_fill_rect(ctx, GRect(right_x, top_y, line_width, left_height), 0, GCornerNone);
-
-    // Draw progress - fills from RIGHT to LEFT (right side down, bottom, left side up)
-    if (s_progress > 0) {
-      graphics_context_set_fill_color(ctx, GColorWhite);
-      if (progress_distance <= left_height) {
-        // Progress on left side (top to bottom)
-        int fill_height = progress_distance;
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, fill_height), 0, GCornerNone);
-      } else if (progress_distance <= left_height + bottom_width) {
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-        int bottom_progress = progress_distance - left_height;
-        graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_progress, line_width), 0, GCornerNone);
-      } else {
-        graphics_fill_rect(ctx, GRect(left_x, top_y, line_width, left_height), 0, GCornerNone);
-        graphics_fill_rect(ctx, GRect(left_x, bottom_y, bottom_width + line_width, line_width), 0, GCornerNone);
-        int right_progress = progress_distance - left_height - bottom_width - 15;
-        graphics_fill_rect(ctx, GRect(right_x, bottom_y - right_progress, line_width, right_progress), 0, GCornerNone);
-      }
-    }
-  } else {
-    // Arc style - curved design (mirrors the step tracker arc)
-    // Step tracker uses 90° to 270° (left arc). Sun tracker uses 270° to 90° (right arc).
-    graphics_context_set_fill_color(ctx, GColorDarkGray);
+  if (s_progress > 0) {
+    // Fill from top (270°) clockwise toward bottom (450°/90°)
+    int32_t start_angle = 270 - (int32_t)(180.0f * s_progress);
+    graphics_context_set_fill_color(ctx, GColorWhite);
     graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
-                         DEG_TO_TRIGANGLE(90), DEG_TO_TRIGANGLE(270));
-
-    if (s_progress > 0) {
-      // Fill from top (270°) clockwise toward bottom (450°/90°)
-      int32_t start_angle = 270 - (int32_t)(180.0f * s_progress);
-      graphics_context_set_fill_color(ctx, GColorWhite);
-      graphics_fill_radial(ctx, arc_bounds, GOvalScaleModeFitCircle, STEP_TRACK_WIDTH,
-                           DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
-    }
+                          DEG_TO_TRIGANGLE(start_angle), DEG_TO_TRIGANGLE(270));
   }
 }
 

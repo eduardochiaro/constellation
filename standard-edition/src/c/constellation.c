@@ -182,7 +182,7 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
 
   // Draw step tracker (delegated to module)
   if (s_show_step_tracker) {
-    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_tracker_use_line);
+    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
   }
 
   // Calculate second indicator position
