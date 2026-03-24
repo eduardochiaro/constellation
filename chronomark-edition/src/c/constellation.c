@@ -7,6 +7,7 @@
 #include "modules/step_tracker_module.h"
 #include "modules/splash_logo_module.h"
 #include "modules/weather_display_module.h"
+#include "modules/outer_ring_module.h"
 
 // ============================================================================
 // CONSTANTS
@@ -67,7 +68,6 @@ static int s_weather_scale = 1;
 
 static void load_watchface_ui(void *data);
 static DateFormatType parse_date_format(const char *format_str);
-static void draw_gabbro_outer_ring(GContext *ctx, GRect bounds);
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -86,6 +86,11 @@ static DateFormatType parse_date_format(const char *format_str) {
   if (strcmp(format_str, "step_count") == 0) return DATE_FORMAT_STEP_COUNT;
   
   return DATE_FORMAT_WEEKDAY; // Default fallback
+}
+
+static bool check_if_24h() {
+  // Check if the system is set to 24h format
+  return clock_is_24h_style();
 }
 
 static void draw_bitmap_centered(GContext *ctx, GBitmap *bmp, GRect rect) {
@@ -119,19 +124,19 @@ static void clock_ring_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
   // Gabbro outer decorative ring (static, drawn here instead of every-second canvas)
-  draw_gabbro_outer_ring(ctx, bounds);
+  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
+    outer_ring_draw(ctx, bounds);
+  }
 
   if (!s_show_clock_ring) return;
   int radius;
-#if defined(PBL_ROUND)
+
   int BASE_RECT_WIDTH = 150;
   if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
     BASE_RECT_WIDTH = 174;
   }
   radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
-#else
-  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
-#endif
+
   GPoint ring_center = grect_center_point(&bounds);
   int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3;
   if (!s_show_step_tracker) {
@@ -165,84 +170,9 @@ static void clock_ring_update_proc(Layer *layer, GContext *ctx) {
 }
 
 // Draws an outer decorative ring with hour numbers (Gabbro only)
-static void draw_gabbro_outer_ring(GContext *ctx, GRect bounds) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  GPoint screen_center = grect_center_point(&bounds);
-  int outer_radius = bounds.size.w / 2 - 2;   // 2px inset from edge
-  int inner_radius = outer_radius - 26;        // 18px band for numbers
-
-  // Outer border (light gray)
-  graphics_context_set_stroke_color(ctx, GColorLightGray);
-  graphics_context_set_stroke_width(ctx, 2);
-  graphics_draw_circle(ctx, screen_center, outer_radius);
-
-  // Inner border (white)
-  graphics_context_set_stroke_color(ctx, GColorWhite);
-  graphics_context_set_stroke_width(ctx, 1);
-  graphics_draw_circle(ctx, screen_center, inner_radius);
-
-}
 static void draw_gabbro_outer_ring_numbers(GContext *ctx, GRect bounds) {
   if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  GPoint screen_center = grect_center_point(&bounds);
-  int outer_radius = bounds.size.w / 2 - 2;   // 2px inset from edge
-  int inner_radius = outer_radius - 26;        // 18px band for numbers
-
-  // Draw 12, 3, 6, 9 between the two rings
-  int num_radius = (outer_radius + inner_radius) / 2;  // midpoint of the band
-  GFont font = fonts_get_system_font(FONT_KEY_LECO_20_BOLD_NUMBERS);
-  const char *numbers[] = { "12", "3", "6", "9" };
-  // Angles: 12=top(0°), 3=right(90°), 6=bottom(180°), 9=left(270°)
-  const int angles[] = { 0, 90, 180, 270 };
-
-  for (int i = 0; i < 4; i++) {
-    int32_t trig_angle = DEG_TO_TRIGANGLE(angles[i]);
-    int nx = screen_center.x + (int16_t)((sin_lookup(trig_angle) * num_radius) / TRIG_MAX_RATIO);
-    int ny = screen_center.y - (int16_t)((cos_lookup(trig_angle) * num_radius) / TRIG_MAX_RATIO);
-    GSize text_size = graphics_text_layout_get_content_size(
-        numbers[i], font, GRect(0, 0, 24, 20),
-        GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter);
-    GRect text_rect = GRect(nx - text_size.w / 2, ny - text_size.h / 2 - 2,
-                            text_size.w, text_size.h);
-    graphics_context_set_text_color(ctx, GColorWhite);
-    graphics_draw_text(ctx, numbers[i], font, text_rect,
-                       GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-  }
-}
-
-static void draw_gabbro_second_ticker(GContext *ctx, GRect bounds, GPoint indicator) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  int current_degree_of_second = (360 * s_current_second) / 60;
-  graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, 25, DEG_TO_TRIGANGLE(current_degree_of_second - 1), DEG_TO_TRIGANGLE(current_degree_of_second + 1));
-
-  graphics_context_set_fill_color(ctx, GColorRed);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, SECONDS_INDICATOR_SIZE + 2, DEG_TO_TRIGANGLE(current_degree_of_second - 1), DEG_TO_TRIGANGLE(current_degree_of_second + 1));
-}
-
-static void draw_gabbro_minute_ticker(GContext *ctx, GRect bounds, GPoint indicator) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  int current_degree_of_minute = (360 * s_current_minute) / 60;
-  graphics_context_set_fill_color(ctx, GColorCobaltBlue);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, 25, DEG_TO_TRIGANGLE(current_degree_of_minute - 2), DEG_TO_TRIGANGLE(current_degree_of_minute + 2));
-
-  graphics_context_set_fill_color(ctx, GColorPictonBlue);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, SECONDS_INDICATOR_SIZE + 2, DEG_TO_TRIGANGLE(current_degree_of_minute - 2), DEG_TO_TRIGANGLE(current_degree_of_minute + 2));
-}
-
-static void draw_gabbro_hour_ticker(GContext *ctx, GRect bounds, GPoint indicator) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
-
-  int current_degree_of_hour = (360 * ((s_current_hour % 12) * 60 + s_current_minute)) / (12 * 60);
-  graphics_context_set_fill_color(ctx, GColorLightGray);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, 25, DEG_TO_TRIGANGLE(current_degree_of_hour - 4), DEG_TO_TRIGANGLE(current_degree_of_hour + 4));
-
-  graphics_context_set_fill_color(ctx, GColorWhite);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, SECONDS_INDICATOR_SIZE + 2, DEG_TO_TRIGANGLE(current_degree_of_hour - 4), DEG_TO_TRIGANGLE(current_degree_of_hour + 4));
+  outer_ring_draw_numbers(ctx, bounds);
 }
 
 static void canvas_update_proc(Layer *layer, GContext *ctx) {
@@ -255,14 +185,10 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   GPoint center;
   GRect arc_bounds;
 
-#if defined(PBL_ROUND)
   // Round watch layout
-  int BASE_RECT_WIDTH = 150;
-  int BASE_RECT_HEIGHT = 168;
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    BASE_RECT_WIDTH = 174; 
-    BASE_RECT_HEIGHT = 190;
-  }
+  int BASE_RECT_WIDTH = 174;
+  int BASE_RECT_HEIGHT = 190;
+
   int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
   int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
 
@@ -270,17 +196,10 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   diameter = radius * 2;
   center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
   arc_bounds = GRect(center.x - radius, y_offset + 7, diameter, diameter);
-#else
-  // Rectangular watch layout
-  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2 - 15;
-  center = GPoint(bounds.origin.x + bounds.size.w / 2, bounds.origin.y + bounds.size.h + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
-#endif
 
   // Draw step tracker (delegated to module)
   if (s_show_step_tracker) {
-    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_tracker_use_line);
+    step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
   }
 
   // Clock ring is on its own static layer now
@@ -291,7 +210,6 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
   // Draw second ticker if enabled
   if (s_show_second_ticker) {
 
-  #if defined(PBL_ROUND)
     // Circular motion for round watches
     const int circle_inset = 2;
     GPoint screen_center = grect_center_point(&bounds);
@@ -302,47 +220,11 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
       screen_center.x + (int16_t)((sin_lookup(angle) * circle_radius) / TRIG_MAX_RATIO),
       screen_center.y - (int16_t)((cos_lookup(angle) * circle_radius) / TRIG_MAX_RATIO)
     );
-  #else
-    // Perimeter motion for rectangular watches
-    const int inset = 3;
-    int left = bounds.origin.x + inset;
-    int right = bounds.origin.x + bounds.size.w - 1 - inset;
-    int top = bounds.origin.y + inset;
-    int bottom = bounds.origin.y + bounds.size.h - 1 - inset;
-    int width = right - left;
-    int height = bottom - top;
-    indicator = GPoint(left, top);
-    if (width > 0 && height > 0) {
-      int perimeter = 2 * (width + height);
-      int dist = (perimeter * s_current_second) / 60;
-      int offset = width / 2;
-      dist = (dist + offset) % perimeter;
-      // Determine position along perimeter
-      if (dist <= width) {
-        // Top edge
-        indicator.x = left + dist;
-        indicator.y = top;
-      } else if (dist <= width + height) {
-        // Right edge
-        indicator.x = right;
-        indicator.y = top + (dist - width);
-      } else if (dist <= 2 * width + height) {
-        // Bottom edge
-        indicator.x = right - (dist - width - height);
-        indicator.y = bottom;
-      } else {
-        // Left edge
-        indicator.x = left;
-        indicator.y = bottom - (dist - 2 * width - height);
-      }
-    }
-  #endif
+ 
     int half = SECONDS_INDICATOR_SIZE / 2;
 
     if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-      draw_gabbro_hour_ticker(ctx, bounds, indicator);
-      draw_gabbro_minute_ticker(ctx, bounds, indicator);
-      draw_gabbro_second_ticker(ctx, bounds, indicator);
+      outer_ring_draw_tickers(ctx, bounds, s_current_hour, s_current_minute, s_current_second);
     } else {
 
       graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorOrange, GColorWhite));
@@ -387,7 +269,7 @@ static void update_time() {
   
   // Update time
   static char time_buffer[8];
-  strftime(time_buffer, sizeof(time_buffer), clock_is_24h_style() ? "%H:%M" : "%I:%M", tick_time);
+  strftime(time_buffer, sizeof(time_buffer), check_if_24h() ? "%H:%M" : "%I:%M", tick_time);
   text_layer_set_text(s_time_layer, time_buffer);
   s_current_second = tick_time->tm_sec;
   s_current_minute = tick_time->tm_min;
@@ -449,7 +331,7 @@ static void load_watchface_ui(void *data) {
   
   // Create time text layer (central element)
   // Position depends on 24h format (centered when 24h, offset when 12h for AM/PM)
-  int time_width = clock_is_24h_style() ? bounds.size.w : (bounds.size.w - 20);
+  int time_width = check_if_24h() ? bounds.size.w : (bounds.size.w - 20);
   s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 18, time_width, 32));
   if (s_time_layer) {
     text_layer_set_background_color(s_time_layer, GColorClear);
@@ -460,8 +342,8 @@ static void load_watchface_ui(void *data) {
   }
   
   // Create AM/PM indicator layer (only visible in 12h format)
-  if (!clock_is_24h_style()) {
-    s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 30, bounds.size.h / 2 - 15, 18, 22));
+  if (!check_if_24h()) {
+    s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 32, bounds.size.h / 2 - 10, 18, 22));
     if (s_ampm_layer) {
       layer_set_update_proc(s_ampm_layer, ampm_update_proc);
       layer_add_child(window_layer, s_ampm_layer);
@@ -544,7 +426,6 @@ static void save_settings(void) {
   persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
   persist_write_int(MESSAGE_KEY_SPLASH_LOGO_STYLE, s_style_logo);
-  persist_write_bool(MESSAGE_KEY_TRACKER_STYLE, s_tracker_use_line);
   persist_write_bool(MESSAGE_KEY_SHOW_STEP_TRACKER, s_show_step_tracker);
   persist_write_bool(MESSAGE_KEY_SHOW_MOON_VIEW, s_show_moon_view);
   persist_write_bool(MESSAGE_KEY_SHOW_WEATHER, s_show_weather);
@@ -570,9 +451,6 @@ static void load_settings(void) {
   }
   if (persist_exists(MESSAGE_KEY_SPLASH_LOGO_STYLE)) {
     s_style_logo = persist_read_int(MESSAGE_KEY_SPLASH_LOGO_STYLE);
-  }
-  if (persist_exists(MESSAGE_KEY_TRACKER_STYLE)) {
-    s_tracker_use_line = persist_read_bool(MESSAGE_KEY_TRACKER_STYLE);
   }
   
   if (persist_exists(MESSAGE_KEY_SHOW_STEP_TRACKER)) {
@@ -655,16 +533,6 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     s_bottom_module_format = parse_date_format(bottom_format_tuple->value->cstring);
   }
   
-  // Handle step tracker style setting
-  Tuple *tracker_style_tuple = dict_find(iter, MESSAGE_KEY_TRACKER_STYLE);
-  if (tracker_style_tuple) {
-    s_tracker_use_line = (tracker_style_tuple->value->int32 == 1);
-    moon_view_module_set_line_style(s_tracker_use_line);
-    if (s_canvas_layer) {
-      layer_mark_dirty(s_canvas_layer);
-    }
-  }
-  
   // Handle show step tracker setting
   Tuple *show_tracker_tuple = dict_find(iter, MESSAGE_KEY_SHOW_STEP_TRACKER);
   if (show_tracker_tuple) {
@@ -737,8 +605,8 @@ static void prv_init(void) {
   // Load bitmap resources (only central)
   splash_logo_init();
   moon_view_module_init();
-  moon_view_module_set_line_style(s_tracker_use_line);
-  if (!clock_is_24h_style()) {
+
+  if (!check_if_24h()) {
     s_am_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_ACTIVE_IMAGE);
     s_am_inactive_bitmap = gbitmap_create_with_resource(RESOURCE_ID_AM_INACTIVE_IMAGE);
     s_pm_active_bitmap = gbitmap_create_with_resource(RESOURCE_ID_PM_ACTIVE_IMAGE);

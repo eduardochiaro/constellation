@@ -3,12 +3,12 @@
 #include "../utilities/weather.h"
 #include "../modules/step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN
 #include "../utilities/date_format.h"
+#include "../modules/outer_ring_module.h"
 
 static Window *s_moon_window = NULL;
 static TextLayer *s_sunrise_text_layer = NULL;
 static TextLayer *s_sunset_text_layer = NULL;
 static Layer *s_sun_canvas_layer = NULL;
-static bool s_use_line_style = false;
 static GBitmap *bitmap_moon_background = NULL;
 static GBitmap *bitmap_moon_phase = NULL;
 static BitmapLayer *s_bg_bitmap_layer = NULL;
@@ -29,11 +29,17 @@ static const uint32_t s_moon_phase_resources[] = {
 static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
+  // Draw outer ring with hour numbers and tickers
+  outer_ring_draw(ctx, bounds);
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
+  outer_ring_draw_tickers(ctx, bounds, t->tm_hour, t->tm_min, t->tm_sec);
+  outer_ring_draw_numbers(ctx, bounds);
+
   int radius, diameter;
   GPoint center;
   GRect arc_bounds;
 
-#if defined(PBL_ROUND)
   const int BASE_RECT_WIDTH = 150;
   const int BASE_RECT_HEIGHT = 168;
   int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
@@ -42,14 +48,8 @@ static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   diameter = radius * 2;
   center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
   arc_bounds = GRect(center.x - radius, y_offset + 7, diameter, diameter);
-#else
-  radius = bounds.size.w / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2 - 15;
-  center = GPoint(bounds.origin.x + bounds.size.w / 2, bounds.origin.y + bounds.size.h + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(center.x - radius + 8, bounds.origin.y + 22, diameter, diameter);
-#endif
 
-  sun_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds, s_use_line_style);
+  sun_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
 }
 
 static BitmapLayer *create_centered_bitmap_layer(Layer *parent, GBitmap *bitmap, GRect bounds) {
@@ -125,8 +125,8 @@ static void moon_window_load(Window *window) {
     }
   }
 
-  s_sunrise_text_layer = create_info_text_layer(window_layer, GRect(0, PBL_IF_ROUND_ELSE(10,5), bounds.size.w, 50), sunrise_buf);
-  s_sunset_text_layer = create_info_text_layer(window_layer, GRect(0, PBL_IF_ROUND_ELSE(25,20), bounds.size.w, 50), sunset_buf);
+  s_sunrise_text_layer = create_info_text_layer(window_layer, GRect(0, 45, bounds.size.w, 50), sunrise_buf);
+  s_sunset_text_layer = create_info_text_layer(window_layer, GRect(0, 65, bounds.size.w, 50), sunset_buf);
 
   // Moon phase bitmaps
   s_bg_bitmap_layer = create_centered_bitmap_layer(window_layer, bitmap_moon_background, bounds);
@@ -198,8 +198,4 @@ void moon_view_module_hide(void) {
   if (s_moon_window) {
     window_stack_remove(s_moon_window, true);
   }
-}
-
-void moon_view_module_set_line_style(bool use_line) {
-  s_use_line_style = use_line;
 }
