@@ -18,7 +18,7 @@ for DIRECTORY_TO_LINK in "${DIRECTORIES_TO_LINK[@]}"; do
   # Create target directories and symlinks for each target directory
   for TARGET_DIR in "${TARGET_DIR_LIST[@]}"; do
     mkdir -p "$TARGET_DIR"
-    ln -sfn "$SOURCE_DIR" "$TARGET_DIR/$DIRECTORY_TO_LINK"
-    echo "Symlink created: $TARGET_DIR/$DIRECTORY_TO_LINK" -> $SOURCE_DIR"
+    ln -sfn "$(realpath "$SOURCE_DIR")" "$TARGET_DIR/$DIRECTORY_TO_LINK"
+    echo "Symlink created: $TARGET_DIR/$DIRECTORY_TO_LINK -> $(realpath "$SOURCE_DIR")"
   done
 done
