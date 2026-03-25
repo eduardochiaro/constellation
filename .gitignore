@@ -3,5 +3,13 @@ build/
 node_modules/
 .pebble/
 .lock-waf_darwin_build
+
+# Ignore the shared directory since it contains symlinks to the actual source files
 chronomark-edition/src/c/utilities
 standard-edition/src/c/utilities
+
+chronomark-edition/resources/weather
+standard-edition/resources/weather
+
+chronomark-edition/resources/splash_logos
+standard-edition/resources/splash_logos
