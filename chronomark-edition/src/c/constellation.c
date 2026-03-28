@@ -567,14 +567,23 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     weather_display_module_update();
   }
 
+  // Always persist settings regardless of UI state
+  save_settings();
+
   // Only apply settings and redraw if the watchface UI has loaded
   if (s_canvas_layer) {
-    save_settings();
     
-    // Handle step tracker enable/disable (always deinit first to prevent double-init leak)
-    step_tracker_module_deinit();
-    if (s_show_step_tracker) {
-      step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
+    // Handle step tracker enable/disable only when the setting actually changed
+    if (show_tracker_tuple) {
+      step_tracker_module_deinit();
+      if (s_show_step_tracker) {
+        step_tracker_module_init(s_window, layer_get_bounds(window_get_root_layer(s_window)), s_canvas_layer);
+        step_tracker_module_set_goal(s_step_goal);
+        step_tracker_module_subscribe();
+      } else {
+        step_tracker_module_unsubscribe();
+      }
+    } else if (step_goal_tuple && s_show_step_tracker) {
       step_tracker_module_set_goal(s_step_goal);
     }
     
