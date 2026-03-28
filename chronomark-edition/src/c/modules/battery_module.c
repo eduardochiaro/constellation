@@ -49,6 +49,8 @@ static void battery_handler(BatteryChargeState state) {
 }
 
 void battery_module_init(Window *window, GRect bounds) {
+  if (s_battery_layer) return;  // Guard against double-init
+  
   Layer *window_layer = window_get_root_layer(window);
   
   // Create battery indicator layer
