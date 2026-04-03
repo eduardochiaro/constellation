@@ -91,6 +91,7 @@ static DateFormatType parse_date_format(const char *format_str) {
 
 static bool check_if_24h() {
   // Check if the system is set to 24h format
+  return false;
   return clock_is_24h_style();
 }
 
