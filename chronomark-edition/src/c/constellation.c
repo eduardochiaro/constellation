@@ -50,8 +50,9 @@ static int s_last_weather_minute = -1;
 static Layer *s_clock_ring_layer;
 
 // User settings (persisted)
+static bool s_show_clock_analog = true;
 static bool s_show_second_ticker = true;
-static bool s_show_clock_ring = false;
+static bool s_show_decorative_ring = true;
 static bool s_show_step_tracker = true;
 static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
 static DateFormatType s_bottom_module_format = DATE_FORMAT_MONTH_DAY;
@@ -123,30 +124,20 @@ static void ampm_update_proc(Layer *layer, GContext *ctx) {
 static void clock_ring_update_proc(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
 
-  // Gabbro outer decorative ring (static, drawn here instead of every-second canvas)
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
+  if (s_show_clock_analog) {
     outer_ring_draw(ctx, bounds);
   }
 
-  if (!s_show_clock_ring) return;
+  if (!s_show_decorative_ring) return;
   int radius;
 
-  int BASE_RECT_WIDTH = 150;
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    BASE_RECT_WIDTH = 174;
-  }
+  int BASE_RECT_WIDTH = 174;
   radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
 
   GPoint ring_center = grect_center_point(&bounds);
-  int ring_outer_radius = radius - STEP_TRACK_WIDTH - 3;
+  int ring_outer_radius = radius - STEP_TRACK_WIDTH - 7;
   if (!s_show_step_tracker) {
     ring_outer_radius += 10;
-  }
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeEmery) {
-    ring_outer_radius -= 15;
-  }
-  if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-    ring_outer_radius -= 4;
   }
   int tick_length_normal = 2;
   int tick_length_major = 3;
@@ -171,7 +162,6 @@ static void clock_ring_update_proc(Layer *layer, GContext *ctx) {
 
 // Draws an outer decorative ring with hour numbers (Gabbro only)
 static void draw_gabbro_outer_ring_numbers(GContext *ctx, GRect bounds) {
-  if (PBL_PLATFORM_TYPE_CURRENT != PlatformTypeGabbro) return;
   outer_ring_draw_numbers(ctx, bounds);
 }
 
@@ -202,40 +192,13 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
   }
 
-  // Clock ring is on its own static layer now
-
-  // Calculate second indicator position
-  GPoint indicator;
-
   // Draw second ticker if enabled
-  if (s_show_second_ticker) {
-
-    // Circular motion for round watches
-    const int circle_inset = 2;
-    GPoint screen_center = grect_center_point(&bounds);
-    int circle_radius = bounds.size.w / 2 - circle_inset;
-    if (circle_radius < 5) circle_radius = 5;
-    int32_t angle = (TRIG_MAX_ANGLE * s_current_second) / 60;
-    indicator = GPoint(
-      screen_center.x + (int16_t)((sin_lookup(angle) * circle_radius) / TRIG_MAX_RATIO),
-      screen_center.y - (int16_t)((cos_lookup(angle) * circle_radius) / TRIG_MAX_RATIO)
-    );
- 
-    int half = SECONDS_INDICATOR_SIZE / 2;
-
-    if (PBL_PLATFORM_TYPE_CURRENT == PlatformTypeGabbro) {
-      outer_ring_draw_tickers(ctx, bounds, s_current_hour, s_current_minute, s_current_second);
-    } else {
-
-      graphics_context_set_fill_color(ctx, PBL_IF_COLOR_ELSE(GColorOrange, GColorWhite));
-      graphics_fill_rect(ctx, GRect(indicator.x - half, indicator.y - half,
-                                    SECONDS_INDICATOR_SIZE, SECONDS_INDICATOR_SIZE), 
-                        0, GCornerNone);
-    }
-
+  if (s_show_second_ticker && s_show_clock_analog) {
+    outer_ring_draw_tickers(ctx, bounds, s_current_hour, s_current_minute, s_current_second);
   }
-
-  draw_gabbro_outer_ring_numbers(ctx, bounds);
+  if (s_show_clock_analog) {
+    draw_gabbro_outer_ring_numbers(ctx, bounds);
+  }
 }
 
 // ============================================================================
@@ -332,18 +295,18 @@ static void load_watchface_ui(void *data) {
   // Create time text layer (central element)
   // Position depends on 24h format (centered when 24h, offset when 12h for AM/PM)
   int time_width = check_if_24h() ? bounds.size.w : (bounds.size.w - 20);
-  s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 18, time_width, 32));
+  s_time_layer = text_layer_create(GRect(0, bounds.size.h / 2 - 20, time_width, 36));
   if (s_time_layer) {
     text_layer_set_background_color(s_time_layer, GColorClear);
     text_layer_set_text_color(s_time_layer, GColorWhite);
-    text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_LECO_28_LIGHT_NUMBERS));
+    text_layer_set_font(s_time_layer, fonts_get_system_font(FONT_KEY_LECO_32_BOLD_NUMBERS));
     text_layer_set_text_alignment(s_time_layer, GTextAlignmentCenter);
     layer_add_child(window_layer, text_layer_get_layer(s_time_layer));
   }
   
   // Create AM/PM indicator layer (only visible in 12h format)
   if (!check_if_24h()) {
-    s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 32, bounds.size.h / 2 - 10, 18, 22));
+    s_ampm_layer = layer_create(GRect(bounds.size.w / 2 + 36, bounds.size.h / 2 - 10, 18, 22));
     if (s_ampm_layer) {
       layer_set_update_proc(s_ampm_layer, ampm_update_proc);
       layer_add_child(window_layer, s_ampm_layer);
@@ -420,8 +383,9 @@ static void prv_window_unload(Window *window) {
 // ============================================================================
 
 static void save_settings(void) {
+  persist_write_bool(MESSAGE_KEY_SHOW_CLOCK_ANALOG, s_show_clock_analog);
   persist_write_bool(MESSAGE_KEY_SHOW_SECOND_TICKER, s_show_second_ticker);
-  persist_write_bool(MESSAGE_KEY_SHOW_CLOCK_RING, s_show_clock_ring);
+  persist_write_bool(MESSAGE_KEY_SHOW_DECORATIVE_RING, s_show_decorative_ring);
   persist_write_int(MESSAGE_KEY_TOP_MODULE_FORMAT, s_top_module_format);
   persist_write_int(MESSAGE_KEY_BOTTOM_MODULE_FORMAT, s_bottom_module_format);
   persist_write_int(MESSAGE_KEY_STEP_GOAL, s_step_goal);
@@ -433,11 +397,14 @@ static void save_settings(void) {
 }
 
 static void load_settings(void) {
+  if (persist_exists(MESSAGE_KEY_SHOW_CLOCK_ANALOG)) {
+    s_show_clock_analog = persist_read_bool(MESSAGE_KEY_SHOW_CLOCK_ANALOG);
+  }
   if (persist_exists(MESSAGE_KEY_SHOW_SECOND_TICKER)) {
     s_show_second_ticker = persist_read_bool(MESSAGE_KEY_SHOW_SECOND_TICKER);
   }
-  if (persist_exists(MESSAGE_KEY_SHOW_CLOCK_RING)) {
-    s_show_clock_ring = persist_read_bool(MESSAGE_KEY_SHOW_CLOCK_RING);
+  if (persist_exists(MESSAGE_KEY_SHOW_DECORATIVE_RING)) {
+    s_show_decorative_ring = persist_read_bool(MESSAGE_KEY_SHOW_DECORATIVE_RING);
   }
   if (persist_exists(MESSAGE_KEY_TOP_MODULE_FORMAT)) {
     s_top_module_format = (DateFormatType)persist_read_int(MESSAGE_KEY_TOP_MODULE_FORMAT);
@@ -480,6 +447,15 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
       layer_mark_dirty(s_canvas_layer);
     }
   }
+
+  // Handle outer clock analog ring toggle
+  Tuple *clock_analog_tuple = dict_find(iter, MESSAGE_KEY_SHOW_CLOCK_ANALOG);
+  if (clock_analog_tuple) {
+    s_show_clock_analog = (clock_analog_tuple->value->int32 == 1);
+    if (s_canvas_layer) {
+      layer_mark_dirty(s_canvas_layer);
+    }
+  }
   
   // Handle second ticker visibility setting
   Tuple *show_ticker_tuple = dict_find(iter, MESSAGE_KEY_SHOW_SECOND_TICKER);
@@ -493,9 +469,9 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
   }
   
   // Handle clock ring visibility setting
-  Tuple *show_ring_tuple = dict_find(iter, MESSAGE_KEY_SHOW_CLOCK_RING);
+  Tuple *show_ring_tuple = dict_find(iter, MESSAGE_KEY_SHOW_DECORATIVE_RING);
   if (show_ring_tuple) {
-    s_show_clock_ring = (show_ring_tuple->value->int32 == 1);
+    s_show_decorative_ring = (show_ring_tuple->value->int32 == 1);
     if (s_clock_ring_layer) {
       layer_mark_dirty(s_clock_ring_layer);
     }
@@ -633,7 +609,7 @@ static void prv_init(void) {
   }
   
   // Subscribe to services — use SECOND_UNIT only when second ticker is enabled
-  tick_timer_service_subscribe(s_show_second_ticker ? SECOND_UNIT : MINUTE_UNIT, tick_handler);
+  tick_timer_service_subscribe(s_show_second_ticker && s_show_clock_analog ? SECOND_UNIT : MINUTE_UNIT, tick_handler);
   accel_tap_service_subscribe(accel_tap_handler);
   
   // Modules handle their own subscriptions

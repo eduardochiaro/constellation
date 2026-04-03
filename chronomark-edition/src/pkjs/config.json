@@ -12,15 +12,21 @@
       },
       {
         "type": "toggle",
+        "messageKey": "SHOW_CLOCK_ANALOG",
+        "label": "Show Clock Analog Ring",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
         "messageKey": "SHOW_SECOND_TICKER",
         "label": "Show Second Ticker",
         "defaultValue": true
       },
       {
         "type": "toggle",
-        "messageKey": "SHOW_CLOCK_RING",
-        "label": "Show Clock Ring",
-        "defaultValue": false
+        "messageKey": "SHOW_DECORATIVE_RING",
+        "label": "Show Decorative Ring",
+        "defaultValue": true
       },
       {
         "type": "toggle",

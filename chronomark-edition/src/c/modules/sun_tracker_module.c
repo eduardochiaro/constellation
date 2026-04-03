@@ -5,8 +5,8 @@
 
 static BitmapLayer *s_left_icon_layer = NULL;
 static BitmapLayer *s_right_icon_layer = NULL;
-static GBitmap *s_sun_up_bitmap = NULL;
-static GBitmap *s_sun_down_bitmap = NULL;
+static GBitmap *s_left_bitmap = NULL;
+static GBitmap *s_right_bitmap = NULL;
 
 static float s_progress = 0.0f;
 static bool s_is_daytime = true;
@@ -28,43 +28,35 @@ static int parse_iso_minutes(const char *iso_str) {
 void sun_tracker_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
 
-  s_sun_up_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_UP_IMAGE);
-  s_sun_down_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_DOWN_IMAGE);
+  s_left_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_UP_IMAGE);
+  s_right_bitmap = gbitmap_create_with_resource(RESOURCE_ID_SUN_DOWN_IMAGE);
 
   // Compute arc geometry (mirrors moon_view sun_canvas_update_proc)
-  int radius, diameter;
-  GRect arc_bounds;
+  int radius = 175 / 2 + STEP_TRACK_MARGIN;
+  int cy = bounds.size.h / 2;
 
-  const int BASE_RECT_WIDTH = 150;
-  const int BASE_RECT_HEIGHT = 168;
-  int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
-  int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
-  radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
-  diameter = radius * 2;
-  GPoint arc_center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
-  arc_bounds = GRect(arc_center.x - radius, y_offset + 7, diameter, diameter);
-
-  // Arc center and effective radius for icon placement
-  int cx = arc_bounds.origin.x + arc_bounds.size.w / 2;
-  int cy = arc_bounds.origin.y + arc_bounds.size.h / 2;
-  int icon_radius = arc_bounds.size.w / 2;
-
-  // Left icon at left edge of arc
-  int left_x = cx - icon_radius;
-  int left_y = cy - SUN_ICON_SIZE - 2;
-  s_left_icon_layer = bitmap_layer_create(GRect(left_x, left_y, SUN_ICON_SIZE, SUN_ICON_SIZE));
-  if (s_left_icon_layer) {
-    bitmap_layer_set_compositing_mode(s_left_icon_layer, GCompOpSet);
-    layer_add_child(window_layer, bitmap_layer_get_layer(s_left_icon_layer));
+  // Left icon at 270° (top of arc)
+  if (s_left_bitmap) {
+    int icon_x = 0 + (bounds.size.w / 2 - radius);
+    int icon_y = cy - WALKING_ICON_SIZE;
+    s_left_icon_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_left_icon_layer) {
+      bitmap_layer_set_bitmap(s_left_icon_layer, s_left_bitmap);
+      bitmap_layer_set_compositing_mode(s_left_icon_layer, GCompOpSet);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_left_icon_layer));
+    }
   }
 
-  // Right icon at right edge of arc
-  int right_x = cx + icon_radius - SUN_ICON_SIZE;
-  int right_y = cy - SUN_ICON_SIZE - 2;
-  s_right_icon_layer = bitmap_layer_create(GRect(right_x, right_y, SUN_ICON_SIZE, SUN_ICON_SIZE));
-  if (s_right_icon_layer) {
-    bitmap_layer_set_compositing_mode(s_right_icon_layer, GCompOpSet);
-    layer_add_child(window_layer, bitmap_layer_get_layer(s_right_icon_layer));
+  // Right icon at 90° (bottom of arc)
+  if (s_right_bitmap) {
+    int icon_x = bounds.size.w - (bounds.size.w / 2 - radius) - WALKING_ICON_SIZE;
+    int icon_y = cy - WALKING_ICON_SIZE;
+    s_right_icon_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_right_icon_layer) {
+      bitmap_layer_set_bitmap(s_right_icon_layer, s_right_bitmap);
+      bitmap_layer_set_compositing_mode(s_right_icon_layer, GCompOpSet);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_right_icon_layer));
+    }
   }
 
   // Initial update to set icons and progress
@@ -77,11 +69,11 @@ void sun_tracker_module_update(void) {
     s_progress = 0.0f;
     s_is_daytime = true;
     // Set default icon arrangement (day: sun_down left, sun_up right)
-    if (s_left_icon_layer && s_sun_down_bitmap) {
-      bitmap_layer_set_bitmap(s_left_icon_layer, s_sun_down_bitmap);
+    if (s_left_icon_layer && s_right_bitmap) {
+      bitmap_layer_set_bitmap(s_left_icon_layer, s_right_bitmap);
     }
-    if (s_right_icon_layer && s_sun_up_bitmap) {
-      bitmap_layer_set_bitmap(s_right_icon_layer, s_sun_up_bitmap);
+    if (s_right_icon_layer && s_left_bitmap) {
+      bitmap_layer_set_bitmap(s_right_icon_layer, s_left_bitmap);
     }
     return;
   }
@@ -127,15 +119,15 @@ void sun_tracker_module_update(void) {
 
   // Set icons based on day/night
   if (!s_is_daytime) {
-    if (s_left_icon_layer && s_sun_down_bitmap)
-      bitmap_layer_set_bitmap(s_left_icon_layer, s_sun_down_bitmap);
-    if (s_right_icon_layer && s_sun_up_bitmap)
-      bitmap_layer_set_bitmap(s_right_icon_layer, s_sun_up_bitmap);
+    if (s_left_icon_layer && s_right_bitmap)
+      bitmap_layer_set_bitmap(s_left_icon_layer, s_right_bitmap);
+    if (s_right_icon_layer && s_left_bitmap)
+      bitmap_layer_set_bitmap(s_right_icon_layer, s_left_bitmap);
   } else {
-    if (s_left_icon_layer && s_sun_up_bitmap)
-      bitmap_layer_set_bitmap(s_left_icon_layer, s_sun_up_bitmap);
-    if (s_right_icon_layer && s_sun_down_bitmap)
-      bitmap_layer_set_bitmap(s_right_icon_layer, s_sun_down_bitmap);
+    if (s_left_icon_layer && s_left_bitmap)
+      bitmap_layer_set_bitmap(s_left_icon_layer, s_left_bitmap);
+    if (s_right_icon_layer && s_right_bitmap)
+      bitmap_layer_set_bitmap(s_right_icon_layer, s_right_bitmap);
   }
 }
 
@@ -164,12 +156,12 @@ void sun_tracker_module_deinit(void) {
     bitmap_layer_destroy(s_right_icon_layer);
     s_right_icon_layer = NULL;
   }
-  if (s_sun_up_bitmap) {
-    gbitmap_destroy(s_sun_up_bitmap);
-    s_sun_up_bitmap = NULL;
+  if (s_left_bitmap) {
+    gbitmap_destroy(s_left_bitmap);
+    s_left_bitmap = NULL;
   }
-  if (s_sun_down_bitmap) {
-    gbitmap_destroy(s_sun_down_bitmap);
-    s_sun_down_bitmap = NULL;
+  if (s_right_bitmap) {
+    gbitmap_destroy(s_right_bitmap);
+    s_right_bitmap = NULL;
   }
 }

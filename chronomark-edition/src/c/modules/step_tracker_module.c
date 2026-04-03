@@ -1,9 +1,9 @@
 #include "step_tracker_module.h"
 
-static BitmapLayer *s_walk_layer = NULL;
-static BitmapLayer *s_flag_layer = NULL;
-static GBitmap *s_walking_bitmap = NULL;
-static GBitmap *s_flag_bitmap = NULL;
+static BitmapLayer *s_left_icon_layer = NULL;
+static BitmapLayer *s_right_icon_layer = NULL;
+static GBitmap *s_left_bitmap = NULL;
+static GBitmap *s_right_bitmap = NULL;
 static int s_step_count = 0;
 static int s_step_goal = 8000;
 static Layer *s_parent_canvas_layer = NULL;
@@ -30,37 +30,34 @@ void step_tracker_module_init(Window *window, GRect bounds, Layer *canvas_layer)
   s_parent_canvas_layer = canvas_layer;
   
   // Load bitmap resources
-  s_walking_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_IMAGE);
-  s_flag_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FLAG_IMAGE);
+  s_left_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_IMAGE);
+  s_right_bitmap = gbitmap_create_with_resource(RESOURCE_ID_FLAG_IMAGE);
 
   // Compute arc geometry (mirrors canvas_update_proc in constellation.c)
   int radius = 175 / 2 + STEP_TRACK_MARGIN;
-
   int cy = bounds.size.h / 2;
 
-  // Walking icon at 270° (top of arc)
-  if (s_walking_bitmap) {
+  // Left icon at 270° (top of arc)
+  if (s_left_bitmap) {
     int icon_x = 0 + (bounds.size.w / 2 - radius);
     int icon_y = cy - WALKING_ICON_SIZE;
-    s_walk_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
-    if (s_walk_layer) {
-      bitmap_layer_set_bitmap(s_walk_layer, s_walking_bitmap);
-      bitmap_layer_set_compositing_mode(s_walk_layer, GCompOpSet);
-      //bitmap_layer_set_background_color(s_walk_layer, );
-      layer_add_child(window_layer, bitmap_layer_get_layer(s_walk_layer));
+    s_left_icon_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_left_icon_layer) {
+      bitmap_layer_set_bitmap(s_left_icon_layer, s_left_bitmap);
+      bitmap_layer_set_compositing_mode(s_left_icon_layer, GCompOpSet);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_left_icon_layer));
     }
   }
 
-  // Flag icon at 90° (bottom of arc)
-  if (s_flag_bitmap) {
-    int flag_x = bounds.size.w - (bounds.size.w / 2 - radius) - WALKING_ICON_SIZE;
-    int flag_y = cy - WALKING_ICON_SIZE;
-    s_flag_layer = bitmap_layer_create(GRect(flag_x, flag_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
-    if (s_flag_layer) {
-      bitmap_layer_set_bitmap(s_flag_layer, s_flag_bitmap);
-      bitmap_layer_set_compositing_mode(s_flag_layer, GCompOpSet);
-      //bitmap_layer_set_background_color(s_flag_layer, GColorRed);
-      layer_add_child(window_layer, bitmap_layer_get_layer(s_flag_layer));
+  // Right icon at 90° (bottom of arc)
+  if (s_right_bitmap) {
+    int icon_x = bounds.size.w - (bounds.size.w / 2 - radius) - WALKING_ICON_SIZE;
+    int icon_y = cy - WALKING_ICON_SIZE;
+    s_right_icon_layer = bitmap_layer_create(GRect(icon_x, icon_y, WALKING_ICON_SIZE, WALKING_ICON_SIZE));
+    if (s_right_icon_layer) {
+      bitmap_layer_set_bitmap(s_right_icon_layer, s_right_bitmap);
+      bitmap_layer_set_compositing_mode(s_right_icon_layer, GCompOpSet);
+      layer_add_child(window_layer, bitmap_layer_get_layer(s_right_icon_layer));
     }
   }
   
@@ -119,22 +116,22 @@ void step_tracker_module_unsubscribe(void) {
 
 void step_tracker_module_deinit(void) {
   // Destroy bitmap layers
-  if (s_walk_layer) {
-    bitmap_layer_destroy(s_walk_layer);
-    s_walk_layer = NULL;
+  if (s_left_icon_layer) {
+    bitmap_layer_destroy(s_left_icon_layer);
+    s_left_icon_layer = NULL;
   }
-  if (s_flag_layer) {
-    bitmap_layer_destroy(s_flag_layer);
-    s_flag_layer = NULL;
+  if (s_right_icon_layer) {
+    bitmap_layer_destroy(s_right_icon_layer);
+    s_right_icon_layer = NULL;
   }
   
   // Destroy bitmaps
-  if (s_walking_bitmap) {
-    gbitmap_destroy(s_walking_bitmap);
-    s_walking_bitmap = NULL;
+  if (s_left_bitmap) {
+    gbitmap_destroy(s_left_bitmap);
+    s_left_bitmap = NULL;
   }
-  if (s_flag_bitmap) {
-    gbitmap_destroy(s_flag_bitmap);
-    s_flag_bitmap = NULL;
+  if (s_right_bitmap) {
+    gbitmap_destroy(s_right_bitmap);
+    s_right_bitmap = NULL;
   }
 }

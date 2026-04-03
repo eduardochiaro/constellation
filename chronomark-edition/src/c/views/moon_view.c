@@ -40,15 +40,16 @@ static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   GPoint center;
   GRect arc_bounds;
 
-  const int BASE_RECT_WIDTH = 150;
-  const int BASE_RECT_HEIGHT = 168;
+  const int BASE_RECT_WIDTH = 174;
+  const int BASE_RECT_HEIGHT = 190;
+
   int x_offset = (bounds.size.w - BASE_RECT_WIDTH) / 2 + bounds.origin.x;
   int y_offset = (bounds.size.h - BASE_RECT_HEIGHT) / 2 + bounds.origin.y;
   radius = BASE_RECT_WIDTH / 2 + STEP_TRACK_MARGIN;
   diameter = radius * 2;
   center = GPoint(x_offset + BASE_RECT_WIDTH / 2, y_offset + BASE_RECT_HEIGHT + STEP_TRACK_MARGIN - 3);
   arc_bounds = GRect(center.x - radius, y_offset + 7, diameter, diameter);
-
+  
   sun_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
 }
 
