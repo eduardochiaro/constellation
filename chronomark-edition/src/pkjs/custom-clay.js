@@ -4,6 +4,14 @@ module.exports = function(minified) {
   var $ = minified.$;
   var HTML = minified.HTML;
 
+  function toggleClockAnalog() {
+    if (this.get()) {
+      clayConfig.getItemByMessageKey('SHOW_SECOND_TICKER').enable();
+    } else {
+      clayConfig.getItemByMessageKey('SHOW_SECOND_TICKER').disable();
+    }
+  }
+
   function toggleStepTracker() {
     if (this.get()) {
       clayConfig.getItemByMessageKey('STEP_GOAL').enable();
@@ -51,7 +59,9 @@ module.exports = function(minified) {
     toggleWeather.call(weatherToggle);
     weatherToggle.on('change', toggleWeather);
 
-
+    var clockAnalogToggle = clayConfig.getItemByMessageKey('SHOW_CLOCK_ANALOG');
+    toggleClockAnalog.call(clockAnalogToggle);
+    clockAnalogToggle.on('change', toggleClockAnalog);
 
     var splashLogoStyle = clayConfig.getItemByMessageKey('SPLASH_LOGO_STYLE');
     setLogoDisplay.call(splashLogoStyle);

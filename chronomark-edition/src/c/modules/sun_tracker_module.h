@@ -2,7 +2,7 @@
 #include <pebble.h>
 #include "step_tracker_module.h" // for STEP_TRACK_WIDTH, STEP_TRACK_MARGIN, WALKING_ICON_SIZE
 
-#define SUN_ICON_SIZE 15
+#define SUN_ICON_SIZE 20
 
 // Initialize the sun tracker module (creates icon layers)
 void sun_tracker_module_init(Window *window, GRect bounds);
