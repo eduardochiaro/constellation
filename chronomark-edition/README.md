@@ -1,30 +1,15 @@
 # Constellation
 
-A Pebble watchface inspired by Starfield.
+A Pebble watchface inspired by Starfield. Made just for Pebble Time Round 2
 
 ## Screenshots
 
-### Pebble Time Round
-![Chalk 1](assets/chalk_1.png)
-![Chalk 2](assets/chalk_2.png)
-
-### Pebble/Steel/2
-![Aplite 1](assets/aplite_1.png)
-![Aplite 2](assets/aplite_2.png)
-
-### Pebble Time/Time Steel
-![Basalt 0](assets/basalt_0.gif)
-![Basalt 1](assets/basalt_1.png)
-![Basalt 2](assets/basalt_2.png)
-![Basalt 3](assets/basalt_3.png)
-
-### Pebble Time 2
-![Emery 1](assets/emery_1.png)
-![Emery 2](assets/emery_2.png)
+### Pebble Round 2
+![Gabbro](assets/gabbro.png)
 
 ## Store
-[Pebble App Store](https://apps.repebble.com/695299cfda150100090722b8)
-[Rebble App Store](https://apps.rebble.io/en_US/application/695299cfda150100090722b8)
+[Pebble App Store](https://apps.repebble.com/69d01934afd8430009d9a1e8)
+[Rebble App Store](https://apps.rebble.io/en_US/application/69d01934afd8430009d9a1e8)
 
 ## Features
 
@@ -35,7 +20,6 @@ A Pebble watchface inspired by Starfield.
 - **Battery Indicator**: Real-time battery level display
 - **Second Ticker**: Optional animated second indicator (can be hidden via settings)
 - **Splash Screen**: Customizable startup logo (several options or none)
-- **Multi-Platform**: Supports all Pebble watches (Aplite, Basalt, Chalk, Diorite, Emery, Flint)
 
 ## Configuration Options
 
