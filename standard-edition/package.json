@@ -1,7 +1,7 @@
 {
   "name": "constellation",
   "author": "Eduardo Chiaro",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "keywords": [
     "pebble-watchface",
     "pebble",
@@ -115,6 +115,16 @@
           "type": "bitmap",
           "name": "CRIMSON_LOGO_IMAGE",
           "file": "splash_logos/crimson_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "TRACKER_ALLIANCE_BW_LOGO_IMAGE",
+          "file": "splash_logos/tracker_alliance_bw_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "TRACKER_ALLIANCE_COLOR_LOGO_IMAGE",
+          "file": "splash_logos/tracker_alliance_color_logo.png"
         },
         {
           "type": "bitmap",

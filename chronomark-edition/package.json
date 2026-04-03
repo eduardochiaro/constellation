@@ -112,6 +112,16 @@
         },
         {
           "type": "bitmap",
+          "name": "TRACKER_ALLIANCE_BW_LOGO_IMAGE",
+          "file": "splash_logos/tracker_alliance_bw_logo.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "TRACKER_ALLIANCE_COLOR_LOGO_IMAGE",
+          "file": "splash_logos/tracker_alliance_color_logo.png"
+        },
+        {
+          "type": "bitmap",
           "name": "MOON_BACKGROUND_IMAGE",
           "file": "moon/moon_background.png"
         },
