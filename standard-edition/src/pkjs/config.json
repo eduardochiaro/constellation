@@ -180,6 +180,10 @@
           {
             "label": "Distance Walked",
             "value": "distance"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "heart_rate"
           }
         ]
       },
@@ -224,6 +228,10 @@
           {
             "label": "Distance Walked",
             "value": "distance"
+          },
+          {
+            "label": "Heart Rate",
+            "value": "heart_rate"
           }
         ]
       },
@@ -268,5 +276,9 @@
         "defaultValue": false
       }
     ]
+  },
+  {
+    "type": "submit",
+    "defaultValue": "Save Settings"
   }
 ]

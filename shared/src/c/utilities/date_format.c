@@ -13,7 +13,7 @@ static void to_uppercase(char *str) {
   }
 }
 
-void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles) {
+void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles, int heart_rate) {
   if (!buffer) return;
   
   switch (format) {
@@ -87,6 +87,15 @@ void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, 
         } else {
           snprintf(buffer, buffer_size, "%d M", distance_walked);
         }
+      }
+      break;
+      
+    case DATE_FORMAT_HEART_RATE:
+      // Heart rate BPM
+      if (heart_rate > 0) {
+        snprintf(buffer, buffer_size, "%d BPM", heart_rate);
+      } else {
+        snprintf(buffer, buffer_size, "-- BPM");
       }
       break;
       

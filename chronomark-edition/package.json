@@ -17,6 +17,7 @@
     "uuid": "6b9713e7-ffe3-49f6-94b0-3dd3db67b9c1",
     "sdkVersion": "3",
     "enableMultiJS": true,
+    "capabilities": [ "health" ],
     "targetPlatforms": [
       "gabbro"
     ],

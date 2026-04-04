@@ -29,11 +29,11 @@ void top_module_init(Window *window, GRect bounds, int text_y_offset, uint32_t w
   }
 }
 
-void top_module_update(struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles) {
+void top_module_update(struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles, int heart_rate) {
   if (!s_day_layer) return;
   
   static char buffer[20];
-  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count, distance_walked, use_miles);
+  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count, distance_walked, use_miles, heart_rate);
   text_layer_set_text(s_day_layer, buffer);
   
   // Show walking icon for step count or distance format

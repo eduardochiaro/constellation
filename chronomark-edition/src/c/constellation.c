@@ -233,8 +233,8 @@ static void update_time() {
   distance_walked = (int)health_service_sum_today(HealthMetricWalkedDistanceMeters);
 #endif
   
-  top_module_update(tick_time, s_top_module_format, step_count, distance_walked, s_use_miles);
-  bottom_module_update(tick_time, s_bottom_module_format, step_count, distance_walked, s_use_miles);
+  top_module_update(tick_time, s_top_module_format, step_count, distance_walked, s_use_miles, 0);
+  bottom_module_update(tick_time, s_bottom_module_format, step_count, distance_walked, s_use_miles, 0);
   
   // Update time
   static char time_buffer[8];
