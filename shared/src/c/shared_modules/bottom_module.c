@@ -37,7 +37,7 @@ void bottom_module_update(struct tm *tick_time, DateFormatType format, int step_
   text_layer_set_text(s_date_layer, buffer);
   
   // Show walking icon for step count or distance format
-  bool show_icon = (format == DATE_FORMAT_STEP_COUNT || format == DATE_FORMAT_DISTANCE);
+  bool show_icon = (format == DATE_FORMAT_STEP_COUNT);
   if (s_walk_icon_layer) {
     layer_set_hidden(bitmap_layer_get_layer(s_walk_icon_layer), !show_icon);
   }
