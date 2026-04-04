@@ -83,6 +83,7 @@ static DateFormatType parse_date_format(const char *format_str) {
   if (strcmp(format_str, "weekday_day") == 0) return DATE_FORMAT_WEEKDAY_DAY;
   if (strcmp(format_str, "step_count") == 0) return DATE_FORMAT_STEP_COUNT;
   if (strcmp(format_str, "distance") == 0) return DATE_FORMAT_DISTANCE;
+  if (strcmp(format_str, "heart_rate") == 0) return DATE_FORMAT_HEART_RATE;
   
   return DATE_FORMAT_WEEKDAY; // Default fallback
 }
@@ -277,8 +278,13 @@ static void update_time() {
   distance_walked = (int)health_service_sum_today(HealthMetricWalkedDistanceMeters);
 #endif
   
-  top_module_update(tick_time, s_top_module_format, step_count, distance_walked, s_use_miles);
-  bottom_module_update(tick_time, s_bottom_module_format, step_count, distance_walked, s_use_miles);
+  int heart_rate = 0;
+#if defined(PBL_HEALTH)
+  heart_rate = (int)health_service_peek_current_value(HealthMetricHeartRateBPM);
+#endif
+  
+  top_module_update(tick_time, s_top_module_format, step_count, distance_walked, s_use_miles, heart_rate);
+  bottom_module_update(tick_time, s_bottom_module_format, step_count, distance_walked, s_use_miles, heart_rate);
   
   // Update time
   static char time_buffer[8];

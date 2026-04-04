@@ -13,10 +13,11 @@
     "@rebble/clay": "^1.0.8"
   },
   "pebble": {
-    "displayName": "Constellation",
+    "displayName": "Constellation - Standard Edition",
     "uuid": "acdce9c9-bc53-4761-97a7-dcb6e25c6641",
     "sdkVersion": "3",
     "enableMultiJS": true,
+    "capabilities": [ "health" ],
     "targetPlatforms": [
       "aplite",
       "basalt",
