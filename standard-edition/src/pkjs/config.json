@@ -176,6 +176,10 @@
           {
             "label": "Step Count",
             "value": "step_count"
+          },
+          {
+            "label": "Distance Walked",
+            "value": "distance"
           }
         ]
       },
@@ -216,6 +220,10 @@
           {
             "label": "Step Count",
             "value": "step_count"
+          },
+          {
+            "label": "Distance Walked",
+            "value": "distance"
           }
         ]
       }
@@ -245,6 +253,12 @@
           "max": 50000,
           "step": 500
         }      
+      },
+      {
+        "type": "toggle",
+        "messageKey": "USE_MILES",
+        "label": "Use Miles",
+        "defaultValue": false
       }
     ]
   },

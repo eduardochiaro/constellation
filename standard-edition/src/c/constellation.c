@@ -58,6 +58,7 @@ static bool s_tracker_use_line = false;
 static bool s_show_moon_view = true;
 static bool s_show_weather = true;
 static int s_weather_scale = 1;
+static bool s_use_miles = false;
 
 // ============================================================================
 // FORWARD DECLARATIONS
@@ -81,6 +82,7 @@ static DateFormatType parse_date_format(const char *format_str) {
   if (strcmp(format_str, "month_year") == 0) return DATE_FORMAT_MONTH_YEAR;
   if (strcmp(format_str, "weekday_day") == 0) return DATE_FORMAT_WEEKDAY_DAY;
   if (strcmp(format_str, "step_count") == 0) return DATE_FORMAT_STEP_COUNT;
+  if (strcmp(format_str, "distance") == 0) return DATE_FORMAT_DISTANCE;
   
   return DATE_FORMAT_WEEKDAY; // Default fallback
 }
@@ -270,8 +272,13 @@ static void update_time() {
   
   int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
   
-  top_module_update(tick_time, s_top_module_format, step_count);
-  bottom_module_update(tick_time, s_bottom_module_format, step_count);
+  int distance_walked = 0;
+#if defined(PBL_HEALTH)
+  distance_walked = (int)health_service_sum_today(HealthMetricWalkedDistanceMeters);
+#endif
+  
+  top_module_update(tick_time, s_top_module_format, step_count, distance_walked, s_use_miles);
+  bottom_module_update(tick_time, s_bottom_module_format, step_count, distance_walked, s_use_miles);
   
   // Update time
   static char time_buffer[8];
@@ -436,6 +443,7 @@ static void save_settings(void) {
   persist_write_bool(MESSAGE_KEY_SHOW_MOON_VIEW, s_show_moon_view);
   persist_write_bool(MESSAGE_KEY_SHOW_WEATHER, s_show_weather);
   persist_write_int(MESSAGE_KEY_WEATHER_SCALE, s_weather_scale);
+  persist_write_bool(MESSAGE_KEY_USE_MILES, s_use_miles);
 }
 
 static void load_settings(void) {
@@ -473,6 +481,9 @@ static void load_settings(void) {
   }
   if (persist_exists(MESSAGE_KEY_WEATHER_SCALE)) {
     s_weather_scale = persist_read_int(MESSAGE_KEY_WEATHER_SCALE);
+  }
+  if (persist_exists(MESSAGE_KEY_USE_MILES)) {
+    s_use_miles = persist_read_bool(MESSAGE_KEY_USE_MILES);
   }
 }
 
@@ -584,6 +595,12 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     s_weather_scale = atoi(weather_scale_tuple->value->cstring);
     weather_module_set_scale(s_weather_scale);
     weather_display_module_update();
+  }
+
+  // Handle use miles setting
+  Tuple *use_miles_tuple = dict_find(iter, MESSAGE_KEY_USE_MILES);
+  if (use_miles_tuple) {
+    s_use_miles = (use_miles_tuple->value->int32 == 1);
   }
 
   // Always persist settings regardless of UI state

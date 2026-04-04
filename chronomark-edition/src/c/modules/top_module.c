@@ -19,8 +19,8 @@ void top_module_init(Window *window, GRect bounds) {
   }
   
   // Create walking icon layer (initially hidden)
-  s_walk_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_IMAGE);
-  s_walk_icon_layer = bitmap_layer_create(GRect(bounds.size.w / 2 + 20, bounds.size.h / 2 - 35, 15, 15));
+  s_walk_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_SMALL_IMAGE);
+  s_walk_icon_layer = bitmap_layer_create(GRect(bounds.size.w / 2 + 20, bounds.size.h / 2 - 33, 15, 15));
   if (s_walk_icon_layer) {
     bitmap_layer_set_bitmap(s_walk_icon_layer, s_walk_icon_bitmap);
     bitmap_layer_set_compositing_mode(s_walk_icon_layer, GCompOpSet);
@@ -29,15 +29,15 @@ void top_module_init(Window *window, GRect bounds) {
   }
 }
 
-void top_module_update(struct tm *tick_time, DateFormatType format, int step_count) {
+void top_module_update(struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles) {
   if (!s_day_layer) return;
   
   static char buffer[20];
-  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count);
+  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count, distance_walked, use_miles);
   text_layer_set_text(s_day_layer, buffer);
   
-  // Show walking icon only for step count format
-  bool show_icon = (format == DATE_FORMAT_STEP_COUNT);
+  // Show walking icon for step count or distance format
+  bool show_icon = (format == DATE_FORMAT_STEP_COUNT || format == DATE_FORMAT_DISTANCE);
   if (s_walk_icon_layer) {
     layer_set_hidden(bitmap_layer_get_layer(s_walk_icon_layer), !show_icon);
   }

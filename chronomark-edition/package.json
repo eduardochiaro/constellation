@@ -36,7 +36,8 @@
       "WEATHER_DATA",
       "SHOW_MOON_VIEW",
       "SHOW_WEATHER",
-      "WEATHER_SCALE"
+      "WEATHER_SCALE",
+      "USE_MILES"
     ],
     "resources": {
       "media": [
@@ -64,6 +65,11 @@
           "type": "bitmap",
           "name": "WALKING_IMAGE",
           "file": "walking.png"
+        },
+        {
+          "type": "bitmap",
+          "name": "WALKING_SMALL_IMAGE",
+          "file": "walking_small.png"
         },
         {
           "type": "bitmap",
