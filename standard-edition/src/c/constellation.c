@@ -47,7 +47,7 @@ static int s_last_weather_minute = -1;
 static Layer *s_clock_ring_layer;
 
 // User settings (persisted)
-static bool s_show_second_ticker = true;
+static bool s_show_second_ticker = false;
 static bool s_show_clock_ring = false;
 static bool s_show_step_tracker = true;
 static DateFormatType s_top_module_format = DATE_FORMAT_WEEKDAY;
@@ -266,7 +266,6 @@ static void update_time() {
     if (s_show_step_tracker) {
       step_tracker_module_update();
     }
-    battery_module_update();
   }
   
   int step_count = s_show_step_tracker ? step_tracker_module_get_count() : 0;
@@ -289,7 +288,8 @@ static void update_time() {
     }
   }
   
-  if (s_canvas_layer) {
+  // Only redraw canvas when second ticker is active or minute changed
+  if (s_canvas_layer && (s_show_second_ticker || minute_changed)) {
     layer_mark_dirty(s_canvas_layer);
   }
 }

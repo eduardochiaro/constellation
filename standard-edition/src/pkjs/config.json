@@ -14,7 +14,7 @@
         "type": "toggle",
         "messageKey": "SHOW_SECOND_TICKER",
         "label": "Show Second Ticker",
-        "defaultValue": true
+        "defaultValue": false
       },
       {
         "type": "toggle",
