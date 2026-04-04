@@ -77,7 +77,7 @@ cd standard-edition && pebble clean && pebble build
 
 ```bash
 # Emulator
-pebble install --emulator basalt       # Standard
+pebble install --emulator basalt       # Standard (options: aplite|basalt|chalk|diorite|emery|flint)
 pebble install --emulator gabbro       # Chronomark
 
 # Physical watch
