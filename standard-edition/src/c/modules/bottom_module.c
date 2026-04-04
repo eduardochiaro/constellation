@@ -29,15 +29,15 @@ void bottom_module_init(Window *window, GRect bounds) {
   }
 }
 
-void bottom_module_update(struct tm *tick_time, DateFormatType format, int step_count) {
+void bottom_module_update(struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles) {
   if (!s_date_layer) return;
   
   static char buffer[20];
-  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count);
+  format_date_string(buffer, sizeof(buffer), tick_time, format, step_count, distance_walked, use_miles);
   text_layer_set_text(s_date_layer, buffer);
   
-  // Show walking icon only for step count format
-  bool show_icon = (format == DATE_FORMAT_STEP_COUNT);
+  // Show walking icon for step count or distance format
+  bool show_icon = (format == DATE_FORMAT_STEP_COUNT || format == DATE_FORMAT_DISTANCE);
   if (s_walk_icon_layer) {
     layer_set_hidden(bitmap_layer_get_layer(s_walk_icon_layer), !show_icon);
   }

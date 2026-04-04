@@ -42,7 +42,8 @@
       "SHOW_MOON_VIEW",
       "SHOW_WEATHER",
       "WEATHER_SCALE",
-      "SPLASH_LOGO"
+      "SPLASH_LOGO",
+      "USE_MILES"
     ],
     "resources": {
       "media": [

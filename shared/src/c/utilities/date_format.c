@@ -13,7 +13,7 @@ static void to_uppercase(char *str) {
   }
 }
 
-void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, DateFormatType format, int step_count) {
+void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, DateFormatType format, int step_count, int distance_walked, bool use_miles) {
   if (!buffer) return;
   
   switch (format) {
@@ -66,6 +66,28 @@ void format_date_string(char *buffer, size_t buffer_size, struct tm *tick_time, 
     case DATE_FORMAT_STEP_COUNT:
       // Step count
       snprintf(buffer, buffer_size, "%d", step_count);
+      break;
+      
+    case DATE_FORMAT_DISTANCE:
+      // Distance walked
+      if (use_miles) {
+        // Convert meters to miles (1 mile = 1609.34m)
+        int feet = (distance_walked * 3281) / 1000; // meters to feet*10 / 10
+        if (feet >= 52800) { // >= 1 mile in feet (5280 * 10)
+          int miles_x10 = (distance_walked * 10) / 1609;
+          snprintf(buffer, buffer_size, "%d.%d MI", miles_x10 / 10, miles_x10 % 10);
+        } else {
+          int ft = (distance_walked * 3281) / 1000;
+          snprintf(buffer, buffer_size, "%d FT", ft);
+        }
+      } else {
+        if (distance_walked >= 1000) {
+          int km_x10 = distance_walked / 100; // e.g. 1500m → 15 → "1.5 KM"
+          snprintf(buffer, buffer_size, "%d.%d KM", km_x10 / 10, km_x10 % 10);
+        } else {
+          snprintf(buffer, buffer_size, "%d M", distance_walked);
+        }
+      }
       break;
       
     default:
