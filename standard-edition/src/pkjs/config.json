@@ -88,6 +88,14 @@
           {
             "label": "Planet",
             "value": "7"
+          },
+          {
+            "label": "Tracker Alliance (Black & White)",
+            "value": "8"
+          },
+          {
+            "label": "Tracker Alliance (Color)",
+            "value": "9"
           }
         ]
       }

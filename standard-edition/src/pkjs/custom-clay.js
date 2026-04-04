@@ -24,13 +24,15 @@ module.exports = function(minified) {
     var splashLogoStyle = clayConfig.getItemByMessageKey('SPLASH_LOGO_STYLE');
     const image = () => {
       switch (splashLogoStyle.get()) {
-        case '1': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/constellation_bw_logo.png';
-        case '2': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/constellation_color_logo.png';
-        case '3': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/house_varuun_logo.png';
-        case '4': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/freestar_logo.png';
-        case '5': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/sysdef_logo.png';
-        case '6': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/splash_logos/crimson_logo.png';
-        case '7': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/resources/moon/moon_background.png';
+        case '1': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/constellation_bw_logo.png';
+        case '2': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/constellation_color_logo.png';
+        case '3': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/house_varuun_logo.png';
+        case '4': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/freestar_logo.png';
+        case '5': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/sysdef_logo.png';
+        case '6': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/crimson_logo.png';
+        case '7': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/moon/moon_background.png';
+        case '8': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/tracker_alliance_bw_logo.png';
+        case '9': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/tracker_alliance_color_logo.png';
         default: return null;
       }
     }
