@@ -17,11 +17,11 @@ static int s_cached_day = -1;
 static int s_sunrise_min = -1;
 static int s_sunset_min = -1;
 
-void weather_display_module_init(Window *window, GRect bounds) {
+void weather_display_module_init(Window *window, GRect bounds, int weather_y_offset) {
   Layer *window_layer = window_get_root_layer(window);
 
   s_center_x = bounds.size.w / 2;
-  s_center_y = bounds.size.h / 2 - 92;
+  s_center_y = bounds.size.h / 2 + weather_y_offset;
 
   // Temperature text — right of center, leaves room for icon on the left
   s_weather_layer = text_layer_create(GRect(0, s_center_y, s_center_x, 24));

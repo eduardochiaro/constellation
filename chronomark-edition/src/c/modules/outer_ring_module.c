@@ -42,7 +42,7 @@ void outer_ring_draw_numbers(GContext *ctx, GRect bounds) {
   }
 }
 
-void outer_ring_draw_tickers(GContext *ctx, GRect bounds, int hour, int minute, int second) {
+void outer_ring_draw_tickers(GContext *ctx, GRect bounds, int hour, int minute, int second, bool show_seconds) {
   // Hour ticker
   int hour_deg = (360 * ((hour % 12) * 60 + minute)) / (12 * 60);
   graphics_context_set_fill_color(ctx, GColorLightGray);
@@ -61,12 +61,14 @@ void outer_ring_draw_tickers(GContext *ctx, GRect bounds, int hour, int minute, 
   graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, TICKER_TIP_SIZE,
                        DEG_TO_TRIGANGLE(min_deg - 2), DEG_TO_TRIGANGLE(min_deg + 2));
 
-  // Second ticker
-  int sec_deg = (360 * second) / 60;
-  graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, TICKER_RADIAL_DEPTH,
-                       DEG_TO_TRIGANGLE(sec_deg - 1), DEG_TO_TRIGANGLE(sec_deg + 1));
-  graphics_context_set_fill_color(ctx, GColorRed);
-  graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, TICKER_TIP_SIZE,
-                       DEG_TO_TRIGANGLE(sec_deg - 1), DEG_TO_TRIGANGLE(sec_deg + 1));
+  // Second ticker (only when enabled)
+  if (show_seconds) {
+    int sec_deg = (360 * second) / 60;
+    graphics_context_set_fill_color(ctx, GColorDarkCandyAppleRed);
+    graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, TICKER_RADIAL_DEPTH,
+                         DEG_TO_TRIGANGLE(sec_deg - 1), DEG_TO_TRIGANGLE(sec_deg + 1));
+    graphics_context_set_fill_color(ctx, GColorRed);
+    graphics_fill_radial(ctx, bounds, GOvalScaleModeFitCircle, TICKER_TIP_SIZE,
+                         DEG_TO_TRIGANGLE(sec_deg - 1), DEG_TO_TRIGANGLE(sec_deg + 1));
+  }
 }

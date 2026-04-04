@@ -2,7 +2,7 @@
 
 # Define source and target directories
 
-DIRECTORIES_TO_LINK=("src/c/utilities" "resources/weather" "resources/splash_logos")
+DIRECTORIES_TO_LINK=("src/c/utilities" "src/c/shared_modules" "resources/weather" "resources/splash_logos")
 
 TARGET_DIR_LIST=("./chronomark-edition/" "./standard-edition/")
 

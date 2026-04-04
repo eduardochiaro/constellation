@@ -1,12 +1,12 @@
 #include <pebble.h>
-#include "modules/top_module.h"
-#include "modules/bottom_module.h"
-#include "modules/battery_module.h"
+#include "shared_modules/top_module.h"
+#include "shared_modules/bottom_module.h"
+#include "shared_modules/battery_module.h"
 #include "modules/step_tracker_module.h"
-#include "modules/splash_logo_module.h"
+#include "shared_modules/splash_logo_module.h"
 #include "modules/moon_view_module.h"
 #include "utilities/weather.h"
-#include "modules/weather_display_module.h"
+#include "shared_modules/weather_display_module.h"
 
 // ============================================================================
 // CONSTANTS
@@ -379,11 +379,11 @@ static void load_watchface_ui(void *data) {
   
   // Initialize modules
   weather_module_set_scale(s_weather_scale);
-  weather_display_module_init(window, bounds);
+  weather_display_module_init(window, bounds, -65);
   weather_display_module_set_visible(s_show_weather);
-  top_module_init(window, bounds);
-  bottom_module_init(window, bounds);
-  battery_module_init(window, bounds);
+  top_module_init(window, bounds, -40, RESOURCE_ID_WALKING_IMAGE, -35);
+  bottom_module_init(window, bounds, 8, RESOURCE_ID_WALKING_IMAGE, 13);
+  battery_module_init(window, bounds, bounds.size.h / 2 + 8 + 24 + 5 - 2);
   
   if (s_show_step_tracker) {
     step_tracker_module_init(window, bounds, s_canvas_layer);

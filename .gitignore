@@ -8,6 +8,9 @@ node_modules/
 chronomark-edition/src/c/utilities
 standard-edition/src/c/utilities
 
+chronomark-edition/src/c/shared_modules
+standard-edition/src/c/shared_modules
+
 chronomark-edition/resources/weather
 standard-edition/resources/weather
 
