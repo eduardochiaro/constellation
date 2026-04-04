@@ -134,7 +134,6 @@ Access settings through the Pebble/Rebble app on your phone:
 | Top/Bottom Module Format | ✓ | ✓ |
 | Distance (km/mi) | ✓ | ✓ |
 | Heart Rate | ✓ | — |
-| Clock Ring Style | ✓ | — |
 | Tracker Style | ✓ | — |
 | Analog Clock | — | ✓ |
-| Decorative Ring | — | ✓ |
+| Decorative Ring | ✓ | ✓ |
