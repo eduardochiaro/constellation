@@ -13,6 +13,9 @@ static int s_center_x;
 static bool s_visible = true;
 static uint32_t s_last_res_id = 0;
 static int16_t s_last_temp = INT16_MIN;
+static int s_cached_day = -1;
+static int s_sunrise_min = -1;
+static int s_sunset_min = -1;
 
 void weather_display_module_init(Window *window, GRect bounds) {
   Layer *window_layer = window_get_root_layer(window);
@@ -66,13 +69,19 @@ void weather_display_module_update(void) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
   if (t) {
-    int now_min = t->tm_hour * 60 + t->tm_min;
-    struct tm t_sunrise, t_sunset;
-    if (from_string_to_tm(weather->sunrise, &t_sunrise) &&
-        from_string_to_tm(weather->sunset, &t_sunset)) {
-      int sunrise_min = t_sunrise.tm_hour * 60 + t_sunrise.tm_min;
-      int sunset_min = t_sunset.tm_hour * 60 + t_sunset.tm_min;
-      is_night = (now_min < sunrise_min) || (now_min >= sunset_min);
+    // Recalculate sunrise/sunset only when the day changes
+    if (t->tm_mday != s_cached_day) {
+      s_cached_day = t->tm_mday;
+      struct tm t_sunrise, t_sunset;
+      if (from_string_to_tm(weather->sunrise, &t_sunrise) &&
+          from_string_to_tm(weather->sunset, &t_sunset)) {
+        s_sunrise_min = t_sunrise.tm_hour * 60 + t_sunrise.tm_min;
+        s_sunset_min = t_sunset.tm_hour * 60 + t_sunset.tm_min;
+      }
+    }
+    if (s_sunrise_min >= 0 && s_sunset_min >= 0) {
+      int now_min = t->tm_hour * 60 + t->tm_min;
+      is_night = (now_min < s_sunrise_min) || (now_min >= s_sunset_min);
     }
   }
 

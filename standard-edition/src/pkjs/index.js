@@ -145,7 +145,7 @@ function updateWeather() {
     function(err) {
       console.log('Location error: ' + err.message);
     },
-    { timeout: 15000, maximumAge: 60000 }
+    { timeout: 15000, maximumAge: 600000 }
   );
 }
 
@@ -159,8 +159,8 @@ Pebble.addEventListener('ready', function() {
   // Fetch weather on startup
   updateWeather();
   
-  // Update weather every 30 minutes
-  setInterval(updateWeather, 30 * 60 * 1000);
+  // Update weather every 60 minutes
+  setInterval(updateWeather, 60 * 60 * 1000);
 });
 
 Pebble.addEventListener('appmessage', function(e) {

@@ -8,15 +8,21 @@ static int s_step_count = 0;
 static int s_step_goal = 8000;
 static Layer *s_parent_canvas_layer = NULL;
 static int s_last_health_step_count = 0;
+static time_t s_last_health_update = 0;
 
 #if defined(PBL_HEALTH)
 static void health_handler(HealthEventType event, void *context) {
   // Update step count when health data changes
   if (event == HealthEventMovementUpdate || event == HealthEventSignificantUpdate) {
+    // Throttle updates to at most once per 60 seconds
+    time_t now = time(NULL);
+    if (now - s_last_health_update < 60) return;
+    s_last_health_update = now;
+
     int new_count = (int)health_service_sum_today(HealthMetricStepCount);
-    // Only redraw if step count changed meaningfully (by at least 10 steps)
+    // Only redraw if step count changed meaningfully (by at least 50 steps)
     // to avoid excessive redraws during active movement
-    if (new_count - s_last_health_step_count >= 10 || new_count < s_last_health_step_count) {
+    if (new_count - s_last_health_step_count >= 50 || new_count < s_last_health_step_count) {
       s_step_count = new_count;
       s_last_health_step_count = new_count;
       if (s_parent_canvas_layer) {
