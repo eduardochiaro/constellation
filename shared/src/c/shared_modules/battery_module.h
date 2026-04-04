@@ -6,7 +6,7 @@
 #define BATTERY_WIDTH 25
 #define BATTERY_HEIGHT 2
 
-void battery_module_init(Window *window, GRect bounds);
+void battery_module_init(Window *window, GRect bounds, int y_offset);
 void battery_module_update(void);
 void battery_module_deinit(void);
 void battery_module_subscribe(void);

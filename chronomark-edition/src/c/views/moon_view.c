@@ -33,7 +33,7 @@ static void sun_canvas_update_proc(Layer *layer, GContext *ctx) {
   outer_ring_draw(ctx, bounds);
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
-  outer_ring_draw_tickers(ctx, bounds, t->tm_hour, t->tm_min, t->tm_sec);
+  outer_ring_draw_tickers(ctx, bounds, t->tm_hour, t->tm_min, t->tm_sec, true);
   outer_ring_draw_numbers(ctx, bounds);
 
   int radius, diameter;

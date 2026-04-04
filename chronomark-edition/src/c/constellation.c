@@ -1,12 +1,12 @@
 #include <pebble.h>
 #include "views/moon_view.h"
 #include "utilities/weather.h"
-#include "modules/top_module.h"
-#include "modules/bottom_module.h"
-#include "modules/battery_module.h"
+#include "shared_modules/top_module.h"
+#include "shared_modules/bottom_module.h"
+#include "shared_modules/battery_module.h"
 #include "modules/step_tracker_module.h"
-#include "modules/splash_logo_module.h"
-#include "modules/weather_display_module.h"
+#include "shared_modules/splash_logo_module.h"
+#include "shared_modules/weather_display_module.h"
 #include "modules/outer_ring_module.h"
 
 // ============================================================================
@@ -195,9 +195,9 @@ static void canvas_update_proc(Layer *layer, GContext *ctx) {
     step_tracker_module_draw(layer, ctx, bounds, radius, arc_bounds);
   }
 
-  // Draw second ticker if enabled
-  if (s_show_second_ticker && s_show_clock_analog) {
-    outer_ring_draw_tickers(ctx, bounds, s_current_hour, s_current_minute, s_current_second);
+  // Draw clock tickers (hour & minute always, second only if enabled)
+  if (s_show_clock_analog) {
+    outer_ring_draw_tickers(ctx, bounds, s_current_hour, s_current_minute, s_current_second, s_show_second_ticker);
   }
   if (s_show_clock_analog) {
     draw_gabbro_outer_ring_numbers(ctx, bounds);
@@ -338,11 +338,11 @@ static void load_watchface_ui(void *data) {
   
   // Initialize modules
   weather_module_set_scale(s_weather_scale);
-  weather_display_module_init(window, bounds);
+  weather_display_module_init(window, bounds, -92);
   weather_display_module_set_visible(s_show_weather);
-  top_module_init(window, bounds);
-  bottom_module_init(window, bounds);
-  battery_module_init(window, bounds);
+  top_module_init(window, bounds, -36, RESOURCE_ID_WALKING_SMALL_IMAGE, -33);
+  bottom_module_init(window, bounds, 12, RESOURCE_ID_WALKING_SMALL_IMAGE, 18);
+  battery_module_init(window, bounds, bounds.size.h / 2 + 8 + 28 + 5 - 2);
   
   if (s_show_step_tracker) {
     step_tracker_module_init(window, bounds, s_canvas_layer);

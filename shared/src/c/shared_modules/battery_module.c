@@ -48,14 +48,14 @@ static void battery_handler(BatteryChargeState state) {
   }
 }
 
-void battery_module_init(Window *window, GRect bounds) {
+void battery_module_init(Window *window, GRect bounds, int y_offset) {
   if (s_battery_layer) return;  // Guard against double-init
   
   Layer *window_layer = window_get_root_layer(window);
   
   // Create battery indicator layer
   s_battery_layer = layer_create(GRect((bounds.size.w - BATTERY_WIDTH) / 2 - 2,
-                                       bounds.size.h / 2 + 8 + 24 + 5 - 2,
+                                       y_offset,
                                        BATTERY_WIDTH + 4, BATTERY_HEIGHT + 4));
   if (s_battery_layer) {
     layer_set_update_proc(s_battery_layer, battery_update_proc);

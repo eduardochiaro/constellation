@@ -226,6 +226,13 @@
             "value": "distance"
           }
         ]
+      },
+      {
+        "type": "toggle",
+        "messageKey": "USE_MILES",
+        "label": "Use Miles",
+        "description": "If Distance Walked is selected in a module, show distance in miles instead of kilometers",
+        "defaultValue": false
       }
     ]
   },
@@ -261,9 +268,5 @@
         "defaultValue": false
       }
     ]
-  },
-  {
-    "type": "submit",
-    "defaultValue": "Save Settings"
   }
 ]

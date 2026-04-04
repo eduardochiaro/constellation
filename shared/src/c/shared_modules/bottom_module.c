@@ -5,11 +5,11 @@ static BitmapLayer *s_walk_icon_layer = NULL;
 static GBitmap *s_walk_icon_bitmap = NULL;
 static DateFormatType s_current_format = DATE_FORMAT_MONTH_DAY;
 
-void bottom_module_init(Window *window, GRect bounds) {
+void bottom_module_init(Window *window, GRect bounds, int text_y_offset, uint32_t walk_icon_res, int icon_y_offset) {
   Layer *window_layer = window_get_root_layer(window);
   
   // Create text layer
-  s_date_layer = text_layer_create(GRect(0, bounds.size.h / 2 + 12, bounds.size.w, 24));
+  s_date_layer = text_layer_create(GRect(0, bounds.size.h / 2 + text_y_offset, bounds.size.w, 24));
   if (s_date_layer) {
     text_layer_set_background_color(s_date_layer, GColorClear);
     text_layer_set_text_color(s_date_layer, GColorWhite);
@@ -19,8 +19,8 @@ void bottom_module_init(Window *window, GRect bounds) {
   }
   
   // Create walking icon layer (initially hidden)
-  s_walk_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WALKING_SMALL_IMAGE);
-  s_walk_icon_layer = bitmap_layer_create(GRect(bounds.size.w / 2 + 20, bounds.size.h / 2 + 18, 15, 15));
+  s_walk_icon_bitmap = gbitmap_create_with_resource(walk_icon_res);
+  s_walk_icon_layer = bitmap_layer_create(GRect(bounds.size.w / 2 + 20, bounds.size.h / 2 + icon_y_offset, 15, 15));
   if (s_walk_icon_layer) {
     bitmap_layer_set_bitmap(s_walk_icon_layer, s_walk_icon_bitmap);
     bitmap_layer_set_compositing_mode(s_walk_icon_layer, GCompOpSet);

@@ -12,18 +12,6 @@
       },
       {
         "type": "toggle",
-        "messageKey": "SHOW_CLOCK_ANALOG",
-        "label": "Show Clock Analog Ring",
-        "defaultValue": true
-      },
-      {
-        "type": "toggle",
-        "messageKey": "SHOW_SECOND_TICKER",
-        "label": "Show Second Ticker",
-        "defaultValue": false
-      },
-      {
-        "type": "toggle",
         "messageKey": "SHOW_DECORATIVE_RING",
         "label": "Show Decorative Ring",
         "defaultValue": true
@@ -33,6 +21,27 @@
         "messageKey": "SHOW_MOON_VIEW",
         "label": "Show Moon View on wrist flick",
         "defaultValue": true
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
+        "defaultValue": "Outer Ring Options"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_CLOCK_ANALOG",
+        "label": "Show Clock Analog Ring",
+        "defaultValue": true
+      },
+      {
+        "type": "toggle",
+        "messageKey": "SHOW_SECOND_TICKER",
+        "label": "Show Second Ticker",
+        "defaultValue": false
       }
     ]
   },
@@ -224,6 +233,13 @@
             "value": "distance"
           }
         ]
+      },
+      {
+        "type": "toggle",
+        "messageKey": "USE_MILES",
+        "label": "Use Miles",
+        "description": "If Distance Walked is selected in a module, show distance in miles instead of kilometers",
+        "defaultValue": false
       }
     ]
   },
@@ -251,12 +267,6 @@
           "max": 50000,
           "step": 500
         }      
-      },
-      {
-        "type": "toggle",
-        "messageKey": "USE_MILES",
-        "label": "Use Miles",
-        "defaultValue": false
       }
     ]
   },
