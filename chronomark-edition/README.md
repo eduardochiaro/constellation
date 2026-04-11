@@ -5,7 +5,8 @@ A Pebble watchface inspired by Starfield. Made just for Pebble Time Round 2
 ## Screenshots
 
 ### Pebble Round 2
-![Gabbro](assets/gabbro.png)
+![Gabbro](assets/gabbro-1.png)
+![Gabbro](assets/gabbro-2.png)
 
 ## Store
 [Pebble App Store](https://apps.repebble.com/69d01934afd8430009d9a1e8)
