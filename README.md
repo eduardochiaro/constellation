@@ -43,7 +43,7 @@ A Starfield-inspired watchface for Pebble smartwatches. Two editions built from 
 
 ## Setup
 
-**Requires**: [Pebble SDK v3](https://developer.rebble.io/developer.pebble.com/sdk/install/index.html) (toolchain 4.9.127)
+**Requires**: [Pebble SDK v3](https://developer.rebble.io/developer.pebble.com/sdk/install/index.html) 
 
 ```bash
 # Clone and set up symlinks (required before first build)
