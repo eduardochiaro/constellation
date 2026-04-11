@@ -29,6 +29,72 @@
     "items": [
       {
         "type": "heading",
+        "defaultValue": "Center Logo"
+      },
+      {
+        "type": "toggle",
+        "messageKey": "USE_CENTER_LOGO",
+        "label": "Use Logo at center",
+        "description": "Hides the digital clock, date modules, and battery indicator, showing a logo instead",
+        "defaultValue": false
+      },
+      {
+        "type": "text",
+        "id": "CENTER_LOGO_PREVIEW",
+        "label": "Center Logo Preview",
+        "defaultValue": ""
+      },
+      {
+        "type": "select",
+        "messageKey": "CENTER_LOGO_STYLE",
+        "label": "Use Image",
+        "defaultValue": "1",
+        "options": [
+          {
+            "label": "Constellation (Black & White)",
+            "value": "1"
+          },
+          {
+            "label": "Constellation (Color)",
+            "value": "2"
+          },
+          {
+            "label": "House Varuun",
+            "value": "3"
+          },
+          {
+            "label": "Freestar Collective",
+            "value": "4"
+          },
+          {
+            "label": "SysDef",
+            "value": "5"
+          },
+          {
+            "label": "Crimson Fleet",
+            "value": "6"
+          },
+          {
+            "label": "Planet",
+            "value": "7"
+          },
+          {
+            "label": "Tracker Alliance (Black & White)",
+            "value": "8"
+          },
+          {
+            "label": "Tracker Alliance (Color)",
+            "value": "9"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "section",
+    "items": [
+      {
+        "type": "heading",
         "defaultValue": "Outer Ring Options"
       },
       {

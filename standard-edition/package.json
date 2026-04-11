@@ -131,7 +131,7 @@
         {
           "type": "bitmap",
           "name": "MOON_BACKGROUND_IMAGE",
-          "file": "moon/moon_background.png"
+          "file": "splash_logos/moon_background.png"
         },
         {
           "type": "bitmap",

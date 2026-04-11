@@ -8,6 +8,7 @@
 #include "shared_modules/splash_logo_module.h"
 #include "shared_modules/weather_display_module.h"
 #include "modules/outer_ring_module.h"
+#include "utilities/logos.h"
 
 // ============================================================================
 // CONSTANTS
@@ -38,6 +39,10 @@ static GBitmap *s_am_inactive_bitmap;
 static GBitmap *s_pm_active_bitmap;
 static GBitmap *s_pm_inactive_bitmap;
 
+// Center logo (replaces modules when enabled)
+static BitmapLayer *s_center_logo_layer;
+static GBitmap *s_center_logo_bitmap;
+
 // ============================================================================
 // GLOBAL STATE - App Data
 // ============================================================================
@@ -63,6 +68,8 @@ static bool s_show_moon_view = true;
 static bool s_show_weather = true;
 static int s_weather_scale = 1;
 static bool s_use_miles = false;
+static bool s_use_center_logo = false;
+static int s_center_logo_style = 1;
 
 // ============================================================================
 // FORWARD DECLARATIONS
@@ -70,6 +77,7 @@ static bool s_use_miles = false;
 
 static void load_watchface_ui(void *data);
 static DateFormatType parse_date_format(const char *format_str);
+static void apply_center_logo(Window *window);
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -289,6 +297,63 @@ static void prv_window_load(Window *window) {
   }
 }
 
+static void center_logo_cleanup(void) {
+  if (s_center_logo_layer) {
+    bitmap_layer_destroy(s_center_logo_layer);
+    s_center_logo_layer = NULL;
+  }
+  if (s_center_logo_bitmap) {
+    gbitmap_destroy(s_center_logo_bitmap);
+    s_center_logo_bitmap = NULL;
+  }
+}
+
+static void apply_center_logo(Window *window) {
+  // Clean up any existing center logo
+  center_logo_cleanup();
+
+  if (!s_use_center_logo || s_center_logo_style < 1 || s_center_logo_style > SPLASH_LOGO_COUNT) {
+    // Show normal center components
+    if (s_time_layer) layer_set_hidden(text_layer_get_layer(s_time_layer), false);
+    if (s_ampm_layer) layer_set_hidden(s_ampm_layer, false);
+    top_module_deinit();
+    top_module_init(window, layer_get_bounds(window_get_root_layer(window)), -36, RESOURCE_ID_WALKING_SMALL_IMAGE, -33);
+    bottom_module_deinit();
+    bottom_module_init(window, layer_get_bounds(window_get_root_layer(window)), 12, RESOURCE_ID_WALKING_SMALL_IMAGE, 18);
+    battery_module_deinit();
+    battery_module_init(window, layer_get_bounds(window_get_root_layer(window)),
+                        layer_get_bounds(window_get_root_layer(window)).size.h / 2 + 8 + 28 + 5 - 2);
+    battery_module_subscribe();
+    return;
+  }
+
+  // Hide center components
+  if (s_time_layer) layer_set_hidden(text_layer_get_layer(s_time_layer), true);
+  if (s_ampm_layer) layer_set_hidden(s_ampm_layer, true);
+  top_module_deinit();
+  bottom_module_deinit();
+  battery_module_unsubscribe();
+  battery_module_deinit();
+
+  // Show selected logo at center
+  Layer *window_layer = window_get_root_layer(window);
+  GRect bounds = layer_get_bounds(window_layer);
+
+  s_center_logo_bitmap = gbitmap_create_with_resource(s_logo_resources[s_center_logo_style - 1]);
+  if (!s_center_logo_bitmap) return;
+
+  GRect logo_bounds = gbitmap_get_bounds(s_center_logo_bitmap);
+  int x = (bounds.size.w - logo_bounds.size.w) / 2;
+  int y = (bounds.size.h - logo_bounds.size.h) / 2;
+
+  s_center_logo_layer = bitmap_layer_create(GRect(x, y, logo_bounds.size.w, logo_bounds.size.h));
+  if (s_center_logo_layer) {
+    bitmap_layer_set_bitmap(s_center_logo_layer, s_center_logo_bitmap);
+    bitmap_layer_set_compositing_mode(s_center_logo_layer, GCompOpSet);
+    layer_add_child(window_layer, bitmap_layer_get_layer(s_center_logo_layer));
+  }
+}
+
 static void load_watchface_ui(void *data) {
   Window *window = (Window *)data;
   if (!window) return;
@@ -354,9 +419,15 @@ static void load_watchface_ui(void *data) {
 
   // Initialize time display
   update_time();
+
+  // Apply center logo mode (hides center components if enabled)
+  apply_center_logo(window);
 }
 
 static void prv_window_unload(Window *window) {
+  // Clean up center logo
+  center_logo_cleanup();
+
   // Destroy central text layers
   if (s_time_layer) {
     text_layer_destroy(s_time_layer);
@@ -402,6 +473,8 @@ static void save_settings(void) {
   persist_write_bool(MESSAGE_KEY_SHOW_WEATHER, s_show_weather);
   persist_write_int(MESSAGE_KEY_WEATHER_SCALE, s_weather_scale);
   persist_write_bool(MESSAGE_KEY_USE_MILES, s_use_miles);
+  persist_write_bool(MESSAGE_KEY_USE_CENTER_LOGO, s_use_center_logo);
+  persist_write_int(MESSAGE_KEY_CENTER_LOGO_STYLE, s_center_logo_style);
 }
 
 static void load_settings(void) {
@@ -442,6 +515,12 @@ static void load_settings(void) {
   }
   if (persist_exists(MESSAGE_KEY_USE_MILES)) {
     s_use_miles = persist_read_bool(MESSAGE_KEY_USE_MILES);
+  }
+  if (persist_exists(MESSAGE_KEY_USE_CENTER_LOGO)) {
+    s_use_center_logo = persist_read_bool(MESSAGE_KEY_USE_CENTER_LOGO);
+  }
+  if (persist_exists(MESSAGE_KEY_CENTER_LOGO_STYLE)) {
+    s_center_logo_style = persist_read_int(MESSAGE_KEY_CENTER_LOGO_STYLE);
   }
 }
 
@@ -560,6 +639,18 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     s_use_miles = (use_miles_tuple->value->int32 == 1);
   }
 
+  // Handle center logo toggle
+  Tuple *center_logo_tuple = dict_find(iter, MESSAGE_KEY_USE_CENTER_LOGO);
+  if (center_logo_tuple) {
+    s_use_center_logo = (center_logo_tuple->value->int32 == 1);
+  }
+
+  // Handle center logo style setting
+  Tuple *center_logo_style_tuple = dict_find(iter, MESSAGE_KEY_CENTER_LOGO_STYLE);
+  if (center_logo_style_tuple) {
+    s_center_logo_style = atoi(center_logo_style_tuple->value->cstring);
+  }
+
   // Always persist settings regardless of UI state
   save_settings();
 
@@ -590,6 +681,11 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
     }
     update_time();
     battery_module_update();
+
+    // Reapply center logo mode if the setting changed
+    if (center_logo_tuple || center_logo_style_tuple) {
+      apply_center_logo(s_window);
+    }
   }
 }
 

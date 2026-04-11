@@ -52,6 +52,45 @@ module.exports = function(minified) {
     }
   }
 
+  function toggleCenterLogo() {
+    var centerLogoStyle = clayConfig.getItemByMessageKey('CENTER_LOGO_STYLE');
+    if (this.get()) {
+      centerLogoStyle.enable();
+    } else {
+      centerLogoStyle.disable();
+    }
+    setCenterLogoDisplay();
+  }
+
+  function setCenterLogoDisplay() {
+    var centerLogoToggle = clayConfig.getItemByMessageKey('USE_CENTER_LOGO');
+    var centerLogoStyle = clayConfig.getItemByMessageKey('CENTER_LOGO_STYLE');
+    if (!centerLogoToggle.get()) {
+      clayConfig.getItemById('CENTER_LOGO_PREVIEW').set('Center logo is disabled');
+      return;
+    }
+    const image = () => {
+      switch (centerLogoStyle.get()) {
+        case '1': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/constellation_bw_logo.png';
+        case '2': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/constellation_color_logo.png';
+        case '3': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/house_varuun_logo.png';
+        case '4': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/freestar_logo.png';
+        case '5': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/sysdef_logo.png';
+        case '6': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/crimson_logo.png';
+        case '7': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/moon_background.png';
+        case '8': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/tracker_alliance_bw_logo.png';
+        case '9': return 'https://raw.githubusercontent.com/eduardochiaro/constellation/main/shared/resources/splash_logos/tracker_alliance_color_logo.png';
+        default: return null;
+      }
+    }
+    const currentImage = image();
+    if (currentImage) {
+      clayConfig.getItemById('CENTER_LOGO_PREVIEW').set("<img src='" + currentImage + "' style='max-width:100%; max-height:100%; margin: 0 auto; display: block;' />");
+    } else {
+      clayConfig.getItemById('CENTER_LOGO_PREVIEW').set('No image selected');
+    }
+  }
+
   clayConfig.on(clayConfig.EVENTS.AFTER_BUILD, function() {
     var stepTrackerToggle = clayConfig.getItemByMessageKey('SHOW_STEP_TRACKER');
     toggleStepTracker.call(stepTrackerToggle);
@@ -68,5 +107,13 @@ module.exports = function(minified) {
     var splashLogoStyle = clayConfig.getItemByMessageKey('SPLASH_LOGO_STYLE');
     setLogoDisplay.call(splashLogoStyle);
     splashLogoStyle.on('change', setLogoDisplay);
+
+    var centerLogoToggle = clayConfig.getItemByMessageKey('USE_CENTER_LOGO');
+    toggleCenterLogo.call(centerLogoToggle);
+    centerLogoToggle.on('change', toggleCenterLogo);
+
+    var centerLogoStyle = clayConfig.getItemByMessageKey('CENTER_LOGO_STYLE');
+    setCenterLogoDisplay.call(centerLogoStyle);
+    centerLogoStyle.on('change', setCenterLogoDisplay);
   });
 };
